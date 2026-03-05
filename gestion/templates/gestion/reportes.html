@@ -1,0 +1,133 @@
+{% extends 'gestion/base.html' %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="display-6 fw-bold"><i class="bi bi-graph-up-arrow text-success"></i> Resumen de Ganancias</h2>
+        <p class="text-muted">Basado en las fichas finalizadas (Entregadas).</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <form method="GET" class="row g-2 justify-content-md-end align-items-end">
+            <div class="col-auto">
+                <label class="small fw-bold text-muted d-block text-start">Desde:</label>
+                <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-auto">
+                <label class="small fw-bold text-muted d-block text-start">Hasta:</label>
+                <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm shadow-sm" title="Filtrar">
+                    <i class="bi bi-filter"></i>
+                </button>
+                <a href="?exportar=1&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" class="btn btn-success btn-sm shadow-sm" title="Exportar a Excel">
+                    <i class="bi bi-file-earmark-excel"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title opacity-75 small">MANO DE OBRA</h5>
+                <h2 class="fw-bold">${{ total_mo }}</h2>
+                <i class="bi bi-tools position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title opacity-75 small">VENTA DE REPUESTOS</h5>
+                <h2 class="fw-bold">${{ total_repuestos_venta }}</h2>
+                <i class="bi bi-cpu position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title opacity-75 small">INGRESO BRUTO TOTAL</h5>
+                <h2 class="fw-bold">${{ total_ingresos }}</h2>
+                <i class="bi bi-cash-stack position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-secondary">Detalle de Equipos Cobrados</h5>
+                <span class="badge bg-light text-dark border">{{ fichas_count }} reparaciones</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Orden / Cliente</th>
+                            <th>Equipo / Detalle</th>
+                            <th class="text-end">Mano de Obra</th>
+                            <th class="text-end">Repuesto</th>
+                            <th class="text-end">Total Cobrado</th>
+                            {% if user.is_superuser %}
+                            <th class="text-center pe-4">Acción</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fichas %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="badge bg-dark mb-1">#{{ f.codigo_compuesto }}</span><br>
+                                <span class="fw-bold">{{ f.equipo.cliente.nombre_apellido }}</span>
+                            </td>
+                            <td>
+                                <div>{{ f.equipo.marca_modelo }}</div>
+                            </td>
+                            <td class="text-end text-primary fw-medium">$ {{ f.costo_mo }}</td>
+                            <td class="text-end text-info">$ {{ f.costo_repuesto }}</td>
+                            <td class="text-end fw-bold text-success">$ {{ f.costo_mo|add:f.costo_repuesto }}</td>
+                            {% if user.is_superuser %}
+                            <td class="text-center pe-4">
+                                <a href="{% url 'eliminar_registro_reporte' f.id %}" 
+                                   class="btn btn-outline-danger btn-sm border-0" 
+                                   onclick="return confirm('¿Desea eliminar este registro del reporte?')"
+                                   title="Eliminar registro">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if user.is_superuser %}6{% else %}5{% endif %}" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No hay registros en el periodo seleccionado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted small fw-bold">PROMEDIO POR REPARACIÓN</h6>
+                <h3 class="text-success mb-0">${{ promedio }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { size: a4 portrait; margin: 1cm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 12px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .ficha-nro { font-size: 20px; font-weight: bold; color: #0d6efd; }
+        .section { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
+        .legal { font-size: 9px; text-align: justify; margin-top: 30px; color: #555; border-top: 1px dashed #000; padding-top: 10px; }
+        table { width: 100%; }
+        .label { font-weight: bold; width: 30%; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>COMPROBANTE DE INGRESO</h1>
+        <div class="ficha-nro">ORDEN #{{ ficha.codigo_compuesto }}</div>
+        <p>{{ empresa.nombre }} | {{ empresa.direccion }} | Tel: {{ empresa.telefono }}</p>
+    </div>
+
+    <div class="section">
+        <h3>DATOS DEL CLIENTE</h3>
+        <table>
+            <tr><td class="label">Nombre:</td><td>{{ ficha.equipo.cliente.nombre_apellido }}</td></tr>
+            <tr><td class="label">Teléfono:</td><td>{{ ficha.equipo.cliente.telefono }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h3>DATOS DEL EQUIPO</h3>
+        <table>
+            <tr><td class="label">Modelo:</td><td>{{ ficha.equipo.marca_modelo }}</td></tr>
+            <tr><td class="label">Identificador/IMEI:</td><td>{{ ficha.equipo.identificador }}</td></tr>
+            <tr><td class="label">Falla Reportada:</td><td>{{ ficha.falla_cliente }}</td></tr>
+            <tr><td class="label">Observaciones:</td><td>{{ ficha.obs_recepcion }}</td></tr>
+        </table>
+    </div>
+
+    <div class="legal">
+        <strong>TÉRMINOS Y CONDICIONES (LEY 24.240 y CCCN):</strong><br>
+        1. El presupuesto tiene una validez de 10 días. 
+        2. Toda reparación tiene una garantía de 90 días sobre el trabajo realizado (no incluye roturas físicas o mojados posteriores).
+        3. <strong>ABANDONO:</strong> Según el Art. 2587 del CCCN, transcurridos los 90 días corridos de la notificación de "Equipo Listo" o "Presupuesto Rechazado" sin que el cliente retire la unidad, se considerará EQUIPO ABANDONADO. LGI Electrónics queda facultado a disponer del mismo para cubrir gastos de repuestos, mano de obra y depósito, sin derecho a reclamo posterior por parte del cliente.
+    </div>
+
+    <div style="margin-top: 50px;">
+        <table style="text-align: center;">
+            <tr>
+                <td>__________________________<br>Firma del Cliente</td>
+                <td>__________________________<br>LGI Electrónics</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>s

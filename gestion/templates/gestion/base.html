@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LGI Electronics - Gestión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -15,6 +15,13 @@
         }
         body { background-color: var(--bg-soft); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
+        /* Contenedor Responsivo para Apple */
+        .container {
+            width: 100%;
+            padding-right: var(--bs-gutter-x, .75rem);
+            padding-left: var(--bs-gutter-x, .75rem);
+        }
+
         /* Navbar Principal */
         .navbar { 
             background-color: var(--primary-tech) !important; 
@@ -22,7 +29,6 @@
             padding: 0.5rem 1rem;
         }
 
-        /* Ajuste de los enlaces para que no cambien de tamaño al pasar el mouse */
         .nav-link { 
             font-weight: 500; 
             color: rgba(255,255,255,0.8) !important;
@@ -34,7 +40,6 @@
         }
         .nav-link:hover { color: white !important; background: rgba(255,255,255,0.1); }
 
-        /* Estilo unificado para el botón de Nuevo Ingreso */
         .nav-btn-ingreso {
             background-color: var(--success-clean) !important;
             color: white !important;
@@ -45,8 +50,10 @@
             transform: translateY(-1px);
         }
 
-        /* Corrección para móviles (Alineación y espaciado) */
+        /* Ajustes específicos para móviles (iPhone/iPad) */
         @media (max-width: 991.98px) {
+            .navbar-brand img { height: 50px !important; } /* Logo más chico en móvil para ganar espacio */
+            
             .navbar-collapse {
                 background: var(--primary-tech);
                 padding: 1rem;
@@ -56,6 +63,22 @@
             }
             .nav-item { margin-bottom: 8px; }
             .dropdown { margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+            
+            /* Evita el zoom automático en Safari al tocar inputs */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+            
+            /* Tablas con scroll lateral para que no se rompa el ancho */
+            .table-responsive {
+                border: 0;
+            }
+            
+            .container.mt-4 {
+                padding-left: 10px;
+                padding-right: 10px;
+                margin-top: 1.5rem !important;
+            }
         }
 
         .card { border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -63,8 +86,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark shadow-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand py-0" href="{% url 'dashboard' %}">
+        <div class="container-fluid container-lg"> <a class="navbar-brand py-0" href="{% url 'dashboard' %}">
                 {% load static %}
                 <img src="{% static 'img/logo.png' %}" alt="LGI" 
                      style="height: 65px; width: auto; object-fit: contain;">
@@ -100,13 +122,12 @@
                         </a>
                     </li>
                     
-                    {% if user.is_staff %}
                     <li class="nav-item">
                         <a class="nav-link text-info" href="{% url 'gestion_usuarios' %}">
                             <i class="bi bi-people me-2"></i> Personal
                         </a>
                     </li>
-                    {% endif %}
+
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{% url 'papelera_fichas' %}">
                             <i class="bi bi-trash"></i> Papelera

@@ -1,0 +1,464 @@
+[
+{
+  "model": "gestion.cliente",
+  "pk": 1,
+  "fields": {
+    "nombre_apellido": "Dario Cordoneda",
+    "dni": "32878680",
+    "telefono": "543624605132",
+    "email": "dario_cordoneda@hotmail.com"
+  }
+},
+{
+  "model": "gestion.cliente",
+  "pk": 2,
+  "fields": {
+    "nombre_apellido": "angel",
+    "dni": "30407208",
+    "telefono": "543625217896",
+    "email": "pichuco@gmail.com"
+  }
+},
+{
+  "model": "gestion.cliente",
+  "pk": 3,
+  "fields": {
+    "nombre_apellido": "Julia Rambaudi",
+    "dni": "33122345",
+    "telefono": "543624686481",
+    "email": "juliarambaudi@gmail.com"
+  }
+},
+{
+  "model": "gestion.cliente",
+  "pk": 4,
+  "fields": {
+    "nombre_apellido": "Rodrigo Cordoneda",
+    "dni": "33.524.899",
+    "telefono": "543624605132",
+    "email": "rodrigocordoneda@gmail.com"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 1,
+  "fields": {
+    "cliente": 1,
+    "tipo": "iphone",
+    "marca_modelo": "apple / X",
+    "identificador": "1245",
+    "password": "1687"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 2,
+  "fields": {
+    "cliente": 2,
+    "tipo": "iphone",
+    "marca_modelo": "apple / 12",
+    "identificador": "125698",
+    "password": "2394"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 3,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "iphone 16pro ",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 4,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 12 ",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 5,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 12 ",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 6,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 12 ",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 7,
+  "fields": {
+    "cliente": 3,
+    "tipo": "",
+    "marca_modelo": "Iphone 16 ProMax",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 8,
+  "fields": {
+    "cliente": 4,
+    "tipo": "",
+    "marca_modelo": "Macbook Pro M2",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 9,
+  "fields": {
+    "cliente": 3,
+    "tipo": "",
+    "marca_modelo": "iphone 16pro ",
+    "identificador": "1245",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 10,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 12 ",
+    "identificador": "1245",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 11,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 11",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 12,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "apple / 12 ",
+    "identificador": "1245",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.equipo",
+  "pk": 13,
+  "fields": {
+    "cliente": 1,
+    "tipo": "",
+    "marca_modelo": "iphone 16pro ",
+    "identificador": "1398239289",
+    "password": "0000"
+  }
+},
+{
+  "model": "gestion.repuesto",
+  "pk": 3,
+  "fields": {
+    "nombre": "Pin de carga IP 13 Pro",
+    "descripcion": "",
+    "cantidad": 2,
+    "stock_minimo": 2,
+    "precio_costo": "50.00",
+    "precio_venta_sugerido": "65.00"
+  }
+},
+{
+  "model": "gestion.repuesto",
+  "pk": 4,
+  "fields": {
+    "nombre": "Bateria IP X",
+    "descripcion": "",
+    "cantidad": 0,
+    "stock_minimo": 2,
+    "precio_costo": "40.00",
+    "precio_venta_sugerido": "60.00"
+  }
+},
+{
+  "model": "gestion.repuesto",
+  "pk": 5,
+  "fields": {
+    "nombre": "Camara frontal IP 11",
+    "descripcion": "",
+    "cantidad": 4,
+    "stock_minimo": 2,
+    "precio_costo": "45.00",
+    "precio_venta_sugerido": "70.00"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 2,
+  "fields": {
+    "equipo": 2,
+    "tecnico": 1,
+    "estado": "ABD",
+    "falla_cliente": "no funciona pantalla",
+    "obs_recepcion": "bien con carcaza quebrada. no anda la camara",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "0.00",
+    "costo_mo": "0.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-02-23T18:06:58.191Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 4,
+  "fields": {
+    "equipo": 4,
+    "tecnico": null,
+    "estado": "ENT",
+    "falla_cliente": "pantalla rota",
+    "obs_recepcion": "caracaza quebrada",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "0.00",
+    "costo_mo": "150.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-02-26T13:54:45.807Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 6,
+  "fields": {
+    "equipo": 6,
+    "tecnico": null,
+    "estado": "LST",
+    "falla_cliente": "xxxxx",
+    "obs_recepcion": "xxxxx",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "100.00",
+    "costo_mo": "150.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-02-26T14:24:00.830Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 8,
+  "fields": {
+    "equipo": 8,
+    "tecnico": null,
+    "estado": "ING",
+    "falla_cliente": "Limpieza interna y cambio de pasta termica",
+    "obs_recepcion": "no posee detalles",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "0.00",
+    "costo_mo": "0.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-02-26T14:38:30.960Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 9,
+  "fields": {
+    "equipo": 9,
+    "tecnico": null,
+    "estado": "ENT",
+    "falla_cliente": "xxxxxx",
+    "obs_recepcion": "xxxxx",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "100.00",
+    "costo_mo": "100.00",
+    "resumen_trabajo": "se realizo cambio de pantalla ",
+    "fecha_ingreso": "2026-02-26T18:38:06.336Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 10,
+  "fields": {
+    "equipo": 10,
+    "tecnico": null,
+    "estado": "ING",
+    "falla_cliente": "no enciende",
+    "obs_recepcion": "no posee detalles ",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": null,
+    "costo_repuesto": "0.00",
+    "costo_mo": "0.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-03-03T11:33:47.498Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 11,
+  "fields": {
+    "equipo": 11,
+    "tecnico": null,
+    "estado": "ENT",
+    "falla_cliente": "no tiene ",
+    "obs_recepcion": "no tiene ",
+    "eliminado": false,
+    "fecha_eliminacion": null,
+    "repuesto_stock": 5,
+    "costo_repuesto": "70.00",
+    "costo_mo": "25.00",
+    "resumen_trabajo": "cambio de camara frontal ",
+    "fecha_ingreso": "2026-03-03T12:04:48.126Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 12,
+  "fields": {
+    "equipo": 12,
+    "tecnico": null,
+    "estado": "ING",
+    "falla_cliente": "no carga",
+    "obs_recepcion": "no tiene detalles ",
+    "eliminado": true,
+    "fecha_eliminacion": "2026-03-03T14:46:41.466Z",
+    "repuesto_stock": null,
+    "costo_repuesto": "0.00",
+    "costo_mo": "0.00",
+    "resumen_trabajo": "",
+    "fecha_ingreso": "2026-03-03T13:58:34.046Z"
+  }
+},
+{
+  "model": "gestion.ficha",
+  "pk": 13,
+  "fields": {
+    "equipo": 13,
+    "tecnico": null,
+    "estado": "REP",
+    "falla_cliente": "no funciona camara",
+    "obs_recepcion": "tapa trasera rota",
+    "eliminado": true,
+    "fecha_eliminacion": "2026-03-04T15:09:19.294Z",
+    "repuesto_stock": 4,
+    "costo_repuesto": "60.00",
+    "costo_mo": "50.00",
+    "resumen_trabajo": "se realizo cambio de bateria",
+    "fecha_ingreso": "2026-03-04T15:06:14.994Z"
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 2,
+  "fields": {
+    "ficha": 2,
+    "imagen": "fotos/2026/02/23/products-94107Top1-2-1-768x512_eGGjLI9.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 4,
+  "fields": {
+    "ficha": 4,
+    "imagen": "fotos/2026/02/26/products-94107Top1-2-1-768x512.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 6,
+  "fields": {
+    "ficha": 6,
+    "imagen": "fotos/2026/02/26/products-94107Top1-2-1-768x512_BgHbsBQ.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 8,
+  "fields": {
+    "ficha": 8,
+    "imagen": "fotos/2026/02/26/products-94107Top1-2-1-768x512_rDR7aeq.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 9,
+  "fields": {
+    "ficha": 9,
+    "imagen": "fotos/2026/02/26/products-94107Top1-2-1-768x512_MWiiXUP.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 10,
+  "fields": {
+    "ficha": 10,
+    "imagen": "fotos/2026/03/03/products-94107Top1-2-1-768x512.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 11,
+  "fields": {
+    "ficha": 11,
+    "imagen": "fotos/2026/03/03/products-94107Top1-2-1-768x512_J2pkC8h.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 12,
+  "fields": {
+    "ficha": 12,
+    "imagen": "fotos/2026/03/03/products-94107Top1-2-1-768x512_T6rDAq0.jpg",
+    "descripcion": ""
+  }
+},
+{
+  "model": "gestion.fotoficha",
+  "pk": 13,
+  "fields": {
+    "ficha": 13,
+    "imagen": "fotos/2026/03/04/products-94107Top1-2-1-768x512.jpg",
+    "descripcion": ""
+  }
+}
+]

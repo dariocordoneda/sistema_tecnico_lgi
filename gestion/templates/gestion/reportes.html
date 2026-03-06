@@ -1,10 +1,75 @@
 {% extends 'gestion/base.html' %}
 
 {% block content %}
+<style>
+    /* AJUSTES PARA IPHONE / MÓVIL */
+    @media (max-width: 768px) {
+        .display-6 { font-size: 1.5rem !important; }
+
+        /* Ajuste de los filtros de fecha para que no se corten */
+        .text-md-end form {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+        .col-auto { width: 100%; margin-bottom: 10px; }
+        .col-auto .btn { width: 48%; padding: 12px; }
+        .col-auto a.btn { width: 48%; padding: 12px; float: right; }
+
+        /* Tarjetas de montos en vertical */
+        .row.g-4 .col-md-4 { margin-bottom: 10px; }
+
+        /* Transformación de la tabla de detalle a tarjetas */
+        thead { display: none; }
+        table, tbody, tr, td { display: block; width: 100%; }
+        tr {
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        td {
+            text-align: left !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Orden y Cliente destacados */
+        td:nth-of-type(1) {
+            display: block;
+            border-bottom: 1px solid #eee !important;
+            padding-bottom: 10px !important;
+            margin-bottom: 8px;
+        }
+
+        /* Etiquetas para los montos en el móvil */
+        td:nth-of-type(3):before { content: "MANO DE OBRA:"; font-weight: bold; color: #666; font-size: 0.75rem; }
+        td:nth-of-type(4):before { content: "REPUESTOS:"; font-weight: bold; color: #666; font-size: 0.75rem; }
+        td:nth-of-type(5):before { content: "TOTAL COBRADO:"; font-weight: bold; color: #000; font-size: 0.8rem; }
+
+        /* Botón de acción (basurita) más grande */
+        .btn-outline-danger {
+            width: 100%;
+            margin-top: 10px;
+            background-color: #fff5f5;
+            border: 1px solid #feb2b2 !important;
+            padding: 10px;
+        }
+
+        input[type="date"] { font-size: 16px !important; }
+    }
+</style>
+
 <div class="row mb-4 align-items-center">
     <div class="col-md-6">
         <h2 class="display-6 fw-bold"><i class="bi bi-graph-up-arrow text-success"></i> Resumen de Ganancias</h2>
-        <p class="text-muted">Basado en las fichas finalizadas (Entregadas).</p>
+        <p class="text-muted small">Fichas finalizadas (Entregadas).</p>
     </div>
     <div class="col-md-6 text-md-end">
         <form method="GET" class="row g-2 justify-content-md-end align-items-end">
@@ -18,10 +83,10 @@
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-dark btn-sm shadow-sm" title="Filtrar">
-                    <i class="bi bi-filter"></i>
+                    <i class="bi bi-filter"></i> <span class="d-md-none">Filtrar</span>
                 </button>
                 <a href="?exportar=1&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" class="btn btn-success btn-sm shadow-sm" title="Exportar a Excel">
-                    <i class="bi bi-file-earmark-excel"></i>
+                    <i class="bi bi-file-earmark-excel"></i> <span class="d-md-none">Excel</span>
                 </a>
             </div>
         </form>
@@ -33,7 +98,7 @@
         <div class="card border-0 shadow-sm bg-primary text-white h-100">
             <div class="card-body p-4">
                 <h5 class="card-title opacity-75 small">MANO DE OBRA</h5>
-                <h2 class="fw-bold">${{ total_mo }}</h2>
+                <h2 class="fw-bold mb-0">${{ total_mo }}</h2>
                 <i class="bi bi-tools position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
             </div>
         </div>
@@ -42,8 +107,8 @@
     <div class="col-md-4">
         <div class="card border-0 shadow-sm bg-info text-white h-100">
             <div class="card-body p-4">
-                <h5 class="card-title opacity-75 small">VENTA DE REPUESTOS</h5>
-                <h2 class="fw-bold">${{ total_repuestos_venta }}</h2>
+                <h5 class="card-title opacity-75 small">VENTA REPUESTOS</h5>
+                <h2 class="fw-bold mb-0">${{ total_repuestos_venta }}</h2>
                 <i class="bi bi-cpu position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
             </div>
         </div>
@@ -52,27 +117,27 @@
     <div class="col-md-4">
         <div class="card border-0 shadow-sm bg-success text-white h-100">
             <div class="card-body p-4">
-                <h5 class="card-title opacity-75 small">INGRESO BRUTO TOTAL</h5>
-                <h2 class="fw-bold">${{ total_ingresos }}</h2>
+                <h5 class="card-title opacity-75 small">INGRESO BRUTO</h5>
+                <h2 class="fw-bold mb-0">${{ total_ingresos }}</h2>
                 <i class="bi bi-cash-stack position-absolute bottom-0 end-0 p-3 opacity-25" style="font-size: 2.5rem;"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-5">
+<div class="row mt-4 mt-md-5">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-secondary">Detalle de Equipos Cobrados</h5>
-                <span class="badge bg-light text-dark border">{{ fichas_count }} reparaciones</span>
+                <h5 class="mb-0 fw-bold text-secondary">Detalle de Cobros</h5>
+                <span class="badge bg-light text-dark border">{{ fichas_count }} equipos</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th class="ps-4">Orden / Cliente</th>
-                            <th>Equipo / Detalle</th>
+                            <th>Equipo</th>
                             <th class="text-end">Mano de Obra</th>
                             <th class="text-end">Repuesto</th>
                             <th class="text-end">Total Cobrado</th>
@@ -86,30 +151,27 @@
                         <tr>
                             <td class="ps-4">
                                 <span class="badge bg-dark mb-1">#{{ f.codigo_compuesto }}</span><br>
-                                <span class="fw-bold">{{ f.equipo.cliente.nombre_apellido }}</span>
+                                <span class="fw-bold text-uppercase">{{ f.equipo.cliente.nombre_apellido }}</span>
                             </td>
-                            <td>
-                                <div>{{ f.equipo.marca_modelo }}</div>
-                            </td>
+                            <td><div class="text-muted">{{ f.equipo.marca_modelo }}</div></td>
                             <td class="text-end text-primary fw-medium">$ {{ f.costo_mo }}</td>
                             <td class="text-end text-info">$ {{ f.costo_repuesto }}</td>
                             <td class="text-end fw-bold text-success">$ {{ f.costo_mo|add:f.costo_repuesto }}</td>
                             {% if user.is_superuser %}
                             <td class="text-center pe-4">
-                                <a href="{% url 'eliminar_registro_reporte' f.id %}" 
-                                   class="btn btn-outline-danger btn-sm border-0" 
-                                   onclick="return confirm('¿Desea eliminar este registro del reporte?')"
-                                   title="Eliminar registro">
-                                    <i class="bi bi-trash"></i>
+                                <a href="{% url 'eliminar_registro_reporte' f.id %}"
+                                   class="btn btn-outline-danger btn-sm border-0"
+                                   onclick="return confirm('¿Eliminar de reportes?')"
+                                   title="Eliminar">
+                                    <i class="bi bi-trash"></i> <span class="d-md-none">Eliminar Registro</span>
                                 </a>
                             </td>
                             {% endif %}
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="{% if user.is_superuser %}6{% else %}5{% endif %}" class="text-center py-5 text-muted">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                No hay registros en el periodo seleccionado.
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                No hay registros en este periodo.
                             </td>
                         </tr>
                         {% endfor %}
@@ -122,10 +184,10 @@
 
 <div class="row mt-4 mb-5">
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h6 class="text-muted small fw-bold">PROMEDIO POR REPARACIÓN</h6>
-                <h3 class="text-success mb-0">${{ promedio }}</h3>
+        <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body text-center text-md-start">
+                <h6 class="text-muted small fw-bold">PROMEDIO POR EQUIPO</h6>
+                <h3 class="text-success mb-0 fw-bold">${{ promedio }}</h3>
             </div>
         </div>
     </div>

@@ -62,16 +62,12 @@ if DATABASE_URL:
     }
 else:
     # Local — usá un .env con las credenciales
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='sat_electronica'),
-            'USER': config('DB_USER', default=''),
-            'PASSWORD': config('DB_PASSWORD', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
+   DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
 
 # ─── PASSWORDS ────────────────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [

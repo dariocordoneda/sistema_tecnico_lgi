@@ -1,17 +1,19 @@
-from pathlib import Path
 import os
-import dj_database_url
-from decouple import config
+from pathlib import Path
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ─── SEGURIDAD ────────────────────────────────────────────────────────────────
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-x1a_j-r*i@^204a%nj+f@o#fy03h^(qjq#$w$w3tsh$(f)b_9='
 
-# ─── APPS ─────────────────────────────────────────────────────────────────────
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
+
+ALLOWED_HOSTS = ['dariocordoneda.pythonanywhere.com', 'localhost', '127.0.0.1']
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -22,10 +24,8 @@ INSTALLED_APPS = [
     'gestion',
 ]
 
-# ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # ← sirve archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,24 +53,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sat_project.wsgi.application'
 
-# ─── BASE DE DATOS ────────────────────────────────────────────────────────────
-DATABASE_URL = config('DATABASE_URL', default=None)
-
-if DATABASE_URL:
-    # En Railway usa la variable DATABASE_URL automáticamente
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-else:
-    # Local — usá un .env con las credenciales
-   DATABASES = {
+# Database - CAMBIADO A SQLITE PARA PYTHONANYWHERE
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': '/home/DarioCordoneda/sistema_tecnico_lgi/db.sqlite3',
     }
 }
 
-# ─── PASSWORDS ────────────────────────────────────────────────────────────────
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -78,35 +69,33 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ─── I18N ─────────────────────────────────────────────────────────────────────
-LANGUAGE_CODE = 'es-ar'
+# Internationalization
+LANGUAGE_CODE = 'es-ar' # Aprovechamos y lo ponemos en español
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
 
-# ─── ARCHIVOS ESTÁTICOS ───────────────────────────────────────────────────────
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Necesario para producción
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
-# ─── MEDIA ────────────────────────────────────────────────────────────────────
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# ─── AUTH ─────────────────────────────────────────────────────────────────────
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
-# ─── EMAIL ────────────────────────────────────────────────────────────────────
+# Configuración de Email (Mantenemos la tuya)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = f'LGI Electrónics <{EMAIL_HOST_USER}>'
+EMAIL_HOST_USER = 'lgi.repara@gmail.com'
+EMAIL_HOST_PASSWORD = 'yosi vqro bbqm kkqb'
+DEFAULT_FROM_EMAIL = 'LGI Electrónics <lgi.repara@gmail.com>'
 
-# ─── DEFAULT PK ───────────────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

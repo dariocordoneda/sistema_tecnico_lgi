@@ -1,56 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <style>
-        @page { size: a4 portrait; margin: 1cm; }
-        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 12px; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .ficha-nro { font-size: 20px; font-weight: bold; color: #0d6efd; }
-        .section { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
-        .legal { font-size: 9px; text-align: justify; margin-top: 30px; color: #555; border-top: 1px dashed #000; padding-top: 10px; }
-        table { width: 100%; }
-        .label { font-weight: bold; width: 30%; }
+        @page { size: A4 portrait; margin: 1.2cm; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 11px; background: #fff; }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #D4A017;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .hex-logo {
+            width: 44px; height: 44px;
+            background: #D4A017;
+            clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 900; color: #111; letter-spacing: -0.5px;
+        }
+        .brand-text .name {
+            font-size: 15px; font-weight: 700; color: #111;
+            letter-spacing: 2px; text-transform: uppercase; line-height: 1;
+        }
+        .brand-text .tagline {
+            font-size: 8px; color: #888;
+            letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;
+        }
+        .order-box {
+            text-align: right;
+        }
+        .order-label {
+            font-size: 8px; color: #888;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .order-number {
+            font-size: 22px; font-weight: 700; color: #D4A017; line-height: 1;
+        }
+        .order-type {
+            font-size: 9px; color: #555;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* ── GOLDEN BAND ── */
+        .gold-band {
+            background: #D4A017;
+            color: #111;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 5px 12px;
+            border-radius: 4px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        /* ── SECTIONS ── */
+        .section {
+            border: 1px solid #e0e0e0;
+            border-left: 3px solid #D4A017;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #f8f8f8;
+            padding: 6px 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #555;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .section-body { padding: 10px 12px; }
+
+        table.data { width: 100%; border-collapse: collapse; }
+        table.data tr td { padding: 4px 0; vertical-align: top; }
+        table.data tr td.lbl {
+            font-weight: 700; color: #888;
+            font-size: 9px; text-transform: uppercase;
+            letter-spacing: 0.5px; width: 28%;
+            padding-right: 8px;
+        }
+        table.data tr td.val { color: #1a1a1a; font-size: 11px; }
+        table.data tr td.val.highlight { color: #111; font-weight: 700; font-size: 12px; }
+
+        /* ── TÉRMINOS ── */
+        .legal {
+            font-size: 8px;
+            color: #777;
+            text-align: justify;
+            margin-top: 14px;
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+            line-height: 1.5;
+        }
+        .legal strong { color: #555; }
+
+        /* ── FIRMAS ── */
+        .firmas {
+            margin-top: 36px;
+        }
+        .firmas table { width: 100%; text-align: center; }
+        .firmas td { width: 50%; padding-top: 8px; }
+        .firma-line {
+            border-top: 1px solid #333;
+            width: 70%;
+            margin: 0 auto 4px;
+        }
+        .firma-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ── FOOTER ── */
+        .footer {
+            margin-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 8px;
+            text-align: center;
+            font-size: 8px;
+            color: #aaa;
+            letter-spacing: 0.5px;
+        }
+        .footer span { color: #D4A017; font-weight: 700; }
     </style>
 </head>
 <body>
+
+    <!-- HEADER -->
     <div class="header">
-        <h1>COMPROBANTE DE INGRESO</h1>
-        <div class="ficha-nro">ORDEN #{{ ficha.codigo_compuesto }}</div>
-        <p>{{ empresa.nombre }} | {{ empresa.direccion }} | Tel: {{ empresa.telefono }}</p>
+        <div class="brand">
+            <div class="hex-logo">LGI</div>
+            <div class="brand-text">
+                <div class="name">LGI Electrónics</div>
+                <div class="tagline">Servicio Técnico Profesional</div>
+                <div style="font-size:8px;color:#aaa;margin-top:3px;">Resistencia, Chaco | Tel: 3624-605132</div>
+            </div>
+        </div>
+        <div class="order-box">
+            <div class="order-label">Orden de Trabajo</div>
+            <div class="order-number">#{{ ficha.codigo_compuesto }}</div>
+            <div class="order-type">Comprobante de Ingreso</div>
+        </div>
     </div>
 
+    <div class="gold-band">Comprobante de Recepción de Equipo</div>
+
+    <!-- CLIENTE -->
     <div class="section">
-        <h3>DATOS DEL CLIENTE</h3>
-        <table>
-            <tr><td class="label">Nombre:</td><td>{{ ficha.equipo.cliente.nombre_apellido }}</td></tr>
-            <tr><td class="label">Teléfono:</td><td>{{ ficha.equipo.cliente.telefono }}</td></tr>
-        </table>
+        <div class="section-header">Datos del Cliente</div>
+        <div class="section-body">
+            <table class="data">
+                <tr>
+                    <td class="lbl">Nombre</td>
+                    <td class="val highlight">{{ ficha.equipo.cliente.nombre_apellido }}</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Teléfono</td>
+                    <td class="val">{{ ficha.equipo.cliente.telefono }}</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Email</td>
+                    <td class="val">{{ ficha.equipo.cliente.email }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
 
+    <!-- EQUIPO -->
     <div class="section">
-        <h3>DATOS DEL EQUIPO</h3>
-        <table>
-            <tr><td class="label">Modelo:</td><td>{{ ficha.equipo.marca_modelo }}</td></tr>
-            <tr><td class="label">Identificador/IMEI:</td><td>{{ ficha.equipo.identificador }}</td></tr>
-            <tr><td class="label">Falla Reportada:</td><td>{{ ficha.falla_cliente }}</td></tr>
-            <tr><td class="label">Observaciones:</td><td>{{ ficha.obs_recepcion }}</td></tr>
-        </table>
+        <div class="section-header">Datos del Equipo</div>
+        <div class="section-body">
+            <table class="data">
+                <tr>
+                    <td class="lbl">Modelo</td>
+                    <td class="val highlight">{{ ficha.equipo.marca_modelo }}</td>
+                </tr>
+                <tr>
+                    <td class="lbl">IMEI / Serie</td>
+                    <td class="val" style="font-family:monospace;">{{ ficha.equipo.identificador }}</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Falla reportada</td>
+                    <td class="val">{{ ficha.falla_cliente }}</td>
+                </tr>
+                {% if ficha.obs_recepcion %}
+                <tr>
+                    <td class="lbl">Observaciones</td>
+                    <td class="val" style="color:#777;">{{ ficha.obs_recepcion }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
     </div>
 
+    <!-- TÉRMINOS -->
     <div class="legal">
-        <strong>TÉRMINOS Y CONDICIONES (LEY 24.240 y CCCN):</strong><br>
-        1. El presupuesto tiene una validez de 10 días. 
-        2. Toda reparación tiene una garantía de 90 días sobre el trabajo realizado (no incluye roturas físicas o mojados posteriores).
-        3. <strong>ABANDONO:</strong> Según el Art. 2587 del CCCN, transcurridos los 90 días corridos de la notificación de "Equipo Listo" o "Presupuesto Rechazado" sin que el cliente retire la unidad, se considerará EQUIPO ABANDONADO. LGI Electrónics queda facultado a disponer del mismo para cubrir gastos de repuestos, mano de obra y depósito, sin derecho a reclamo posterior por parte del cliente.
+        <strong>TÉRMINOS Y CONDICIONES (Ley 24.240 y CCCN):</strong><br>
+        1. El presupuesto tiene una validez de 10 días corridos desde su emisión.
+        2. Toda reparación tiene una garantía de 90 días sobre el trabajo realizado (no incluye roturas físicas o daños por líquidos posteriores a la reparación).
+        3. <strong>ABANDONO (Art. 2587 CCCN):</strong> Transcurridos los 90 días corridos de la notificación de "Equipo Listo" o "Presupuesto Rechazado" sin que el cliente retire la unidad, se considerará EQUIPO ABANDONADO. LGI Electrónics queda facultado a disponer del mismo para cubrir gastos de repuestos, mano de obra y depósito, sin derecho a reclamo posterior.
+        4. <strong>ES OBLIGATORIO presentar este comprobante para retirar el equipo.</strong>
+        5. LGI Electrónics no se responsabiliza por la pérdida de datos almacenados en el dispositivo.
     </div>
 
-    <div style="margin-top: 50px;">
-        <table style="text-align: center;">
+    <!-- FIRMAS -->
+    <div class="firmas">
+        <table>
             <tr>
-                <td>__________________________<br>Firma del Cliente</td>
-                <td>__________________________<br>LGI Electrónics</td>
+                <td>
+                    <div class="firma-line"></div>
+                    <div class="firma-label">Firma del Cliente</div>
+                </td>
+                <td>
+                    <div class="firma-line"></div>
+                    <div class="firma-label">LGI Electrónics</div>
+                </td>
             </tr>
         </table>
     </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <span>LGI Electrónics</span> — Servicio Técnico Profesional — Resistencia, Chaco — lgi-electronics.netlify.app
+    </div>
+
 </body>
-</html>s
+</html>

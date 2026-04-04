@@ -2,161 +2,192 @@
 
 {% block content %}
 <style>
-    /* AJUSTES PARA IPHONE / MÓVIL */
-    @media (max-width: 768px) {
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            align-items: stretch !important;
-            gap: 10px;
-        }
-        .d-flex.gap-2 {
-            flex-direction: column;
-        }
-        .btn-sm { padding: 10px !important; font-size: 0.9rem; }
+    .btn-accion {
+        width: 34px; height: 34px;
+        border-radius: 8px; border: none;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1rem; cursor: pointer; text-decoration: none;
+    }
+    .btn-edit  { background:#001428; border:1px solid #002244; color:var(--state-dia) !important; }
+    .btn-del   { background:#2a0a0a; border:1px solid #5c1a1a; color:var(--state-inact) !important; }
+    .btn-edit:hover { background:#002244; }
+    .btn-del:hover  { background:#3a0d0d; }
 
-        /* Transformación de tabla a tarjetas */
+    @media (max-width: 768px) {
+        .header-acciones { flex-direction: column; gap: 10px; }
+        .header-acciones .d-flex { flex-direction: column; }
         thead { display: none; }
         table, tbody, tr, td { display: block; width: 100%; }
         tr {
-            margin-bottom: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+            border-radius: 10px;
+            padding: 12px 14px;
         }
-        td { text-align: left; border: none !important; padding: 5px 10px !important; }
-
-        /* Estilos específicos para los datos en la tarjeta */
-        td:nth-of-type(1) { font-size: 1.1rem; border-bottom: 1px solid #eee !important; padding-bottom: 8px !important; margin-bottom: 5px; }
-        td:nth-of-type(2):before { content: "STOCK: "; font-weight: bold; color: #666; font-size: 0.75rem; }
-        td:nth-of-type(3):before { content: "COSTO: "; font-weight: bold; color: #666; font-size: 0.75rem; }
-        td:nth-of-type(4):before { content: "VENTA: "; font-weight: bold; color: #666; font-size: 0.75rem; }
-
-        /* Acciones al final de la tarjeta */
+        td { border: none !important; padding: 4px 0 !important; }
+        td:nth-of-type(1) { font-size: 1rem; border-bottom: 1px solid var(--lgi-border) !important; padding-bottom: 8px !important; margin-bottom: 4px; }
+        td:nth-of-type(2):before { content: "STOCK: "; font-weight: bold; color: var(--lgi-muted); font-size: 0.7rem; }
+        td:nth-of-type(3):before { content: "COSTO: "; font-weight: bold; color: var(--lgi-muted); font-size: 0.7rem; }
+        td:nth-of-type(4):before { content: "VENTA: "; font-weight: bold; color: var(--lgi-muted); font-size: 0.7rem; }
         td.text-center {
-            border-top: 1px solid #eee !important;
-            margin-top: 8px;
-            padding-top: 10px !important;
-            display: flex;
-            justify-content: space-around;
+            border-top: 1px solid var(--lgi-border) !important;
+            margin-top: 8px; padding-top: 10px !important;
+            display: flex; justify-content: space-around;
         }
-        .btn-outline-primary, .btn-outline-danger {
-            flex: 1;
-            border: 1px solid #eee !important;
-            margin: 0 5px;
-        }
-
-        input[type="text"], input[type="number"] { font-size: 16px !important; } /* Evita zoom en Safari */
+        .btn-accion { width: 48px !important; height: 48px !important; font-size: 1.2rem !important; }
+        input[type="text"], input[type="number"] { font-size: 16px !important; }
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold"><i class="bi bi-box-seam"></i> Control de Stock</h2>
+<!-- ENCABEZADO -->
+<div class="d-flex justify-content-between align-items-center mb-4 header-acciones">
+    <h4 class="fw-bold mb-0" style="color:var(--lgi-text);">
+        <i class="bi bi-box-seam me-2" style="color:var(--lgi-gold);"></i>Control de Stock
+    </h4>
     <div class="d-flex gap-2">
         {% if user.is_superuser %}
-            <a href="{% url 'pdf_pedidos' %}" class="btn btn-warning btn-sm shadow-sm">
-                <i class="bi bi-cart-plus"></i> Lista de Pedidos
-            </a>
-            <button class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepuesto">
-                <i class="bi bi-plus-circle"></i> Cargar Repuesto
-            </button>
+        <a href="{% url 'pdf_pedidos' %}" class="btn btn-sm"
+           style="background:#1a1500;border:1px solid #3a2e00;color:var(--state-ing);">
+            <i class="bi bi-cart-plus me-1"></i> Lista de Pedidos
+        </a>
+        <button class="btn btn-sm btn-lgi-gold"
+                data-bs-toggle="modal" data-bs-target="#nuevoRepuesto">
+            <i class="bi bi-plus-circle me-1"></i> Cargar Repuesto
+        </button>
         {% endif %}
-        <a href="{% url 'pdf_stock_total' %}" class="btn btn-secondary btn-sm shadow-sm">
-            <i class="bi bi-clipboard-check"></i> PDF Control
+        <a href="{% url 'pdf_stock_total' %}" class="btn btn-sm"
+           style="background:var(--lgi-dark);border:1px solid var(--lgi-border);color:var(--lgi-muted);">
+            <i class="bi bi-clipboard-check me-1"></i> PDF Control
         </a>
     </div>
 </div>
 
-<div class="card shadow-sm border-0 mb-3">
-    <div class="card-body py-2">
-        <form method="GET" class="row g-2">
-            <div class="col-10">
-                <input type="text" name="buscar" class="form-control" placeholder="Buscar repuesto..." value="{{ busqueda|default:'' }}">
-            </div>
-            <div class="col-2">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-search"></i>
-                </button>
-            </div>
-        </form>
-    </div>
+<!-- BUSCADOR -->
+<div class="mb-3" style="background:var(--lgi-dark);border:1px solid var(--lgi-border);border-radius:8px;padding:10px 14px;">
+    <form method="GET" class="d-flex gap-2">
+        <input type="text" name="buscar" class="form-control"
+               placeholder="Buscar repuesto..." value="{{ busqueda|default:'' }}">
+        <button type="submit" class="btn btn-lgi-gold px-3">
+            <i class="bi bi-search"></i>
+        </button>
+    </form>
 </div>
 
-<div class="card shadow-sm border-0 bg-transparent bg-md-white">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th class="ps-3">Insumo / Repuesto</th>
-                    <th>Cantidad</th>
-                    <th>Costo</th>
-                    <th>Venta Sugerida</th>
-                    <th>Estado</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in repuestos %}
-                <tr {% if r.necesita_reposicion %}class="table-danger"{% endif %}>
-                    <td class="fw-bold ps-3">{{ r.nombre }}</td>
-                    <td><span class="badge bg-light text-dark border">{{ r.cantidad }} unidades</span></td>
-                    <td>
-                        {% if user.is_superuser %}
-                            <span class="text-dark">${{ r.precio_costo }}</span>
-                        {% else %}
-                            <span class="text-muted">****</span>
-                        {% endif %}
-                    </td>
-                    <td class="fw-bold text-success">${{ r.precio_venta_sugerido }}</td>
-                    <td>
-                        {% if r.necesita_reposicion %}
-                            <span class="badge bg-danger w-100 w-md-auto">COMPRAR YA</span>
-                        {% else %}
-                            <span class="badge bg-success w-100 w-md-auto">STOCK OK</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        {% if user.is_superuser %}
-                            <a href="{% url 'editar_repuesto' r.id %}" class="btn btn-sm btn-outline-primary border-0">
-                                <i class="bi bi-pencil-square"></i> <span class="d-md-none">Editar</span>
-                            </a>
-                            <a href="{% url 'eliminar_repuesto' r.id %}"
-                               onclick="return confirm('¿Seguro querés eliminar este repuesto?')"
-                               class="btn btn-sm btn-outline-danger border-0">
-                               <i class="bi bi-trash"></i> <span class="d-md-none">Eliminar</span>
-                            </a>
-                        {% else %}
-                            <i class="bi bi-lock text-muted" title="Acceso restringido"></i>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="text-center py-5 text-muted">No se encontraron repuestos.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<!-- TABLA -->
+<div style="border-radius:10px;border:1px solid var(--lgi-border);overflow:hidden;">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th class="ps-3">Insumo / Repuesto</th>
+                <th>Cantidad</th>
+                <th>Costo</th>
+                <th>Venta Sugerida</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in repuestos %}
+            <tr style="{% if r.necesita_reposicion %}background:#1a0000;border-left:3px solid var(--state-inact);{% endif %}">
+                <td class="fw-bold ps-3" style="color:var(--lgi-text);">{{ r.nombre }}</td>
+                <td>
+                    <span class="badge"
+                          style="background:var(--lgi-dark);border:1px solid var(--lgi-border);color:var(--lgi-text);">
+                        {{ r.cantidad }} u.
+                    </span>
+                </td>
+                <td>
+                    {% if user.is_superuser %}
+                        <span style="color:var(--lgi-muted);">${{ r.precio_costo }}</span>
+                    {% else %}
+                        <span style="color:var(--lgi-border);">****</span>
+                    {% endif %}
+                </td>
+                <td class="fw-bold" style="color:var(--state-lst);">${{ r.precio_venta_sugerido }}</td>
+                <td>
+                    {% if r.necesita_reposicion %}
+                        <span class="badge" style="background:#1a0000;color:var(--state-inact);border:1px solid #3a0000;">
+                            COMPRAR YA
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background:#001408;color:var(--state-lst);border:1px solid #003318;">
+                            STOCK OK
+                        </span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {% if user.is_superuser %}
+                    <div class="d-inline-flex gap-1">
+                        <a href="{% url 'editar_repuesto' r.id %}" class="btn-accion btn-edit" title="Editar">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        <a href="{% url 'eliminar_repuesto' r.id %}"
+                           onclick="return confirm('¿Seguro querés eliminar este repuesto?')"
+                           class="btn-accion btn-del" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                        <i class="bi bi-lock" style="color:var(--lgi-muted);" title="Acceso restringido"></i>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center py-5" style="color:var(--lgi-muted);">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No se encontraron repuestos.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
+<!-- MODAL NUEVO REPUESTO -->
 {% if user.is_superuser %}
 <div class="modal fade" id="nuevoRepuesto" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" class="modal-content">
+        <form method="POST"
+              class="modal-content"
+              style="background:var(--lgi-dark);border:1px solid var(--lgi-border);">
             {% csrf_token %}
-            <div class="modal-header"><h5>Nuevo Insumo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header" style="border-bottom:1px solid var(--lgi-border);">
+                <h5 class="modal-title fw-bold" style="color:var(--lgi-gold);">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Insumo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
-                <div class="mb-3"><label class="fw-bold small">Nombre</label><input type="text" name="nombre" class="form-control" required></div>
-                <div class="row">
-                    <div class="col-6 mb-3"><label class="fw-bold small">Stock</label><input type="number" name="cantidad" class="form-control" required></div>
-                    <div class="col-6 mb-3"><label class="fw-bold small">Mínimo Alerta</label><input type="number" name="stock_minimo" class="form-control" value="2"></div>
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" required>
                 </div>
                 <div class="row">
-                    <div class="col-6 mb-3"><label class="fw-bold small">Costo $</label><input type="number" step="0.01" name="precio_costo" class="form-control" required></div>
-                    <div class="col-6 mb-3"><label class="fw-bold small">Venta $</label><input type="number" step="0.01" name="precio_venta" class="form-control" required></div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Stock</label>
+                        <input type="number" name="cantidad" class="form-control" required>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Mínimo Alerta</label>
+                        <input type="number" name="stock_minimo" class="form-control" value="2">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Costo $</label>
+                        <input type="number" step="0.01" name="precio_costo" class="form-control" required>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Venta $</label>
+                        <input type="number" step="0.01" name="precio_venta" class="form-control" required>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-success w-100">Guardar Repuesto</button></div>
+            <div class="modal-footer" style="border-top:1px solid var(--lgi-border);">
+                <button type="submit" class="btn btn-lgi-gold w-100 fw-bold">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Repuesto
+                </button>
+            </div>
         </form>
     </div>
 </div>

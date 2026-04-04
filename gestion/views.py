@@ -5,27 +5,109 @@ from django.db.models import Q, Sum, F
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.utils import timezone
 from django.contrib.staticfiles.finders import find
-import openpyxl 
+import openpyxl
 from django.utils.timezone import make_aware
 from datetime import datetime
 
-# Modelos y Formularios
 from .models import Cliente, Equipo, Ficha, FotoFicha, Repuesto
-from .forms import RegistroUsuarioForm 
+from .forms import RegistroUsuarioForm
 
-# ReportLab (PDF)
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from django.contrib.staticfiles.storage import staticfiles_storage
 
+
+# --- HELPER: EMAIL HTML LGI ---
+def _build_email_html(cliente, equipo, ficha):
+    fecha = ficha.fecha_ingreso.strftime('%d/%m/%Y') if ficha.fecha_ingreso else ''
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:24px 16px;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:560px;width:100%;">
+  <tr><td style="background:#111111;padding:28px 32px;">
+    <table cellpadding="0" cellspacing="0"><tr>
+      <td style="vertical-align:middle;padding-right:14px;">
+        <table cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#D4A017;text-align:center;vertical-align:middle;font-size:11px;font-weight:900;color:#111;letter-spacing:-1px;">LGI</td></tr></table>
+      </td>
+      <td style="vertical-align:middle;">
+        <div style="font-size:20px;font-weight:700;color:#D4A017;letter-spacing:3px;text-transform:uppercase;line-height:1;">LGI ELECTRÓNICS</div>
+        <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">Servicio Técnico Profesional</div>
+      </td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="background:#D4A017;padding:10px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="font-size:12px;font-weight:700;color:#111;letter-spacing:2px;text-transform:uppercase;">Aviso de Ingreso</td>
+      <td align="right"><span style="background:#111;color:#D4A017;font-size:12px;font-weight:700;padding:4px 12px;border-radius:4px;letter-spacing:1px;">#{ficha.codigo_compuesto}</span></td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="margin:0 0 18px;font-size:15px;color:#222;">Hola <strong>{cliente.nombre_apellido}</strong>,</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#444;line-height:1.7;">Hemos registrado el ingreso de tu equipo en nuestro sistema. A continuación encontrás los datos de tu orden:</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <tr><td style="background:#f8f8f8;border:1px solid #eee;border-left:4px solid #D4A017;border-radius:6px;padding:18px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+        <tr><td style="color:#888;padding:5px 0;width:130px;">Orden Nro</td><td style="color:#111;font-weight:700;padding:5px 0;">#{ficha.codigo_compuesto}</td></tr>
+        <tr><td style="color:#888;padding:5px 0;">Equipo</td><td style="color:#111;padding:5px 0;">{equipo.marca_modelo} / {equipo.identificador}</td></tr>
+        <tr><td style="color:#888;padding:5px 0;vertical-align:top;">Falla reportada</td><td style="color:#111;padding:5px 0;">{ficha.falla_cliente}</td></tr>
+        <tr><td style="color:#888;padding:5px 0;">Fecha de ingreso</td><td style="color:#111;padding:5px 0;">{fecha}</td></tr>
+      </table>
+    </td></tr></table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <tr><td style="background:#111;border-radius:6px;padding:16px 20px;">
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="vertical-align:top;padding-right:12px;"><div style="width:20px;height:20px;background:#D4A017;border-radius:50%;text-align:center;line-height:20px;font-size:12px;font-weight:700;color:#111;">!</div></td>
+        <td style="font-size:13px;color:#ccc;line-height:1.6;">Te avisaremos por <strong style="color:#D4A017;">WhatsApp</strong> cuando tu equipo esté listo para retirar. Asegurate de tener guardado el número: <strong style="color:#ffffff;">3624-605132</strong></td>
+      </tr></table>
+    </td></tr></table>
+    <p style="margin:0 0 8px;font-size:13px;color:#666;line-height:1.6;">Podés comunicarte con nosotros de <strong>Lun a Vier de 8hs a 20hs</strong> al <strong>3624-605132</strong>.</p>
+    <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">Recordatorio legal: Transcurridos los 90 días de la notificación de retiro, el equipo se considerará en abandono (Art. 2587 CCCN).</p>
+  </td></tr>
+  <tr><td style="background:#111;padding:18px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="font-size:11px;color:#555;line-height:1.6;">Resistencia, Chaco<br><a href="https://lgi-electronics.netlify.app" style="color:#D4A017;text-decoration:none;">lgi-electronics.netlify.app</a></td>
+      <td align="right" style="font-size:10px;color:#444;font-style:italic;line-height:1.6;">Casilla automática.<br>No respondas este correo.</td>
+    </tr></table>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>"""
+
+
+def _build_email_texto(cliente, equipo, ficha):
+    return (
+        f"Hola {cliente.nombre_apellido},\n\n"
+        f"Este es un aviso automático de LGI Electrónics. Hemos registrado el ingreso de tu equipo:\n\n"
+        f"- Orden Nro: {ficha.codigo_compuesto}\n"
+        f"- Equipo: {equipo.marca_modelo} / {equipo.identificador}\n"
+        f"- Falla reportada: {ficha.falla_cliente}\n\n"
+        f"Te notificaremos por WhatsApp cuando el equipo esté LISTO.\n\n"
+        f"Consultas: 3624-605132 | Lun-Vier 8hs a 20hs.\n\n"
+        f"Recordatorio: Transcurridos 90 días de la notificación de retiro, el equipo se considerará en abandono (Art. 2587 CCCN).\n\n"
+        f"LGI Electrónics - Servicio Técnico Profesional.\n"
+        f"---\nCasilla automática, no respondas este correo."
+    )
+
+
+def _enviar_email_lgi(cliente, equipo, ficha):
+    asunto = f"Aviso de Ingreso #{ficha.codigo_compuesto} - LGI Electrónics"
+    texto = _build_email_texto(cliente, equipo, ficha)
+    html = _build_email_html(cliente, equipo, ficha)
+    msg = EmailMultiAlternatives(asunto, texto, settings.DEFAULT_FROM_EMAIL, [cliente.email])
+    msg.attach_alternative(html, "text/html")
+    msg.send()
+
+
 # --- 1. SEGURIDAD ---
 def es_admin(user):
-    """Solo el Superusuario tiene acceso a funciones críticas."""
     return user.is_authenticated and user.is_superuser
 
 # --- 2. GESTIÓN DE USUARIOS ---
@@ -69,7 +151,7 @@ def dashboard(request):
     fichas = Ficha.objects.filter(eliminado=False).order_by('-fecha_ingreso')
     busqueda = request.GET.get('buscar')
     filtro_estado = request.GET.get('estado')
-    
+
     if filtro_estado:
         fichas = fichas.filter(estado=filtro_estado)
     if busqueda:
@@ -94,7 +176,7 @@ def detalle_ficha(request, ficha_id):
     ficha = get_object_or_404(Ficha, id=ficha_id)
     repuestos = Repuesto.objects.filter(cantidad__gt=0) | Repuesto.objects.filter(id=ficha.repuesto_stock_id)
     return render(request, 'gestion/detalle.html', {
-        'ficha': ficha, 
+        'ficha': ficha,
         'repuestos_disponibles': repuestos.distinct()
     })
 
@@ -105,7 +187,7 @@ def actualizar_ficha(request, ficha_id):
         ficha.estado = request.POST.get('estado')
         ficha.costo_mo = request.POST.get('costo_mo') or 0
         ficha.resumen_trabajo = request.POST.get('resumen_trabajo')
-        
+
         repuesto_id = request.POST.get('repuesto_seleccionado')
         if repuesto_id:
             nuevo_repuesto = get_object_or_404(Repuesto, id=repuesto_id)
@@ -122,7 +204,7 @@ def actualizar_ficha(request, ficha_id):
                 ficha.repuesto_stock.cantidad += 1
                 ficha.repuesto_stock.save()
                 ficha.repuesto_stock = None
-        
+
         if request.POST.get('costo_repuesto'):
             ficha.costo_repuesto = request.POST.get('costo_repuesto')
         ficha.save()
@@ -133,11 +215,11 @@ def editar_datos_recepcion(request, ficha_id):
     ficha = get_object_or_404(Ficha, id=ficha_id)
     if request.method == 'POST':
         cliente = ficha.equipo.cliente
-        cliente.nombre_apellido = request.POST.get('nombre_cliente')
-        cliente.telefono = request.POST.get('telefono_cliente')
-        cliente.email = request.POST.get('email_cliente')
+        cliente.nombre_apellido = request.POST.get('nombre_apellido')
+        cliente.telefono = request.POST.get('telefono')
+        cliente.email = request.POST.get('email')
         cliente.save()
-        
+
         equipo = ficha.equipo
         equipo.marca_modelo = request.POST.get('marca_modelo')
         equipo.identificador = request.POST.get('identificador')
@@ -164,59 +246,44 @@ def nuevo_ingreso(request):
                 telefono=request.POST.get('telefono'),
                 email=request.POST.get('email')
             )
-        
+
         equipo = Equipo.objects.create(
             cliente=cliente,
             marca_modelo=request.POST.get('marca_modelo'),
             identificador=request.POST.get('identificador'),
             password=request.POST.get('password')
         )
-        
+
         ficha = Ficha.objects.create(
             equipo=equipo, falla_cliente=request.POST.get('falla_cliente'),
             obs_recepcion=request.POST.get('obs_recepcion'), estado='ING'
         )
-        
+
         for f in request.FILES.getlist('fotos'):
             FotoFicha.objects.create(ficha=ficha, imagen=f)
 
         if cliente.email:
             try:
-                asunto = f"Aviso de Ingreso #{ficha.codigo_compuesto} - LGI Electrónics"
-                cuerpo = (
-                    f"Hola {cliente.nombre_apellido},\n\n"
-                    f"Este es un aviso automático de LGI Electrónics. Hemos registrado el ingreso de tu equipo en nuestro sistema:\n\n"
-                    f"- Orden Nro: {ficha.codigo_compuesto}\n"
-                    f"- Equipo: {equipo.marca_modelo} / {equipo.identificador}\n"
-                    f"- Falla reportada: {ficha.falla_cliente}\n\n"
-                    f"Te notificaremos por medio de Whatsapp al numero telefonico informado en la orden cuando el equipo pase a estado 'LISTO'.\n\n"
-                    f"Ante cualquier duda/consulta se puede comunicar al tel: 3624-605132 Lun-Vier de 8hs a 20hs.\n\n"
-                    f"Recordatorio legal: Transcurridos los 90 días de la notificación de retiro, el equipo se considerará en abandono (Art. 2587 CCCN).\n\n"
-                    f"LGI Electrónics - Servicio Técnico Profesional.\n"
-                    f"---\n"
-                    f"Por favor, no respondas a este correo ya que es una casilla automática."
-                )
-                send_mail(asunto, cuerpo, settings.DEFAULT_FROM_EMAIL, [cliente.email])
-            except: pass 
+                _enviar_email_lgi(cliente, equipo, ficha)
+            except:
+                pass
 
         return redirect('dashboard')
     return render(request, 'gestion/nuevo_ingreso.html', {'clientes': clientes, 'cliente_sel': cliente_seleccionado})
 
 
-
-# --- 4. INVENTARIO (CON BUSCADOR Y EDICIÓN) ---
+# --- 4. INVENTARIO ---
 @login_required
 def inventario(request):
     busqueda = request.GET.get('buscar')
     repuestos = Repuesto.objects.all().order_by('nombre')
-    
+
     if busqueda:
         repuestos = repuestos.filter(Q(nombre__icontains=busqueda))
 
     if request.method == 'POST':
         if not request.user.is_superuser:
              return HttpResponse("No tenés permiso para crear repuestos", status=403)
-             
         Repuesto.objects.create(
             nombre=request.POST.get('nombre'),
             cantidad=request.POST.get('cantidad'),
@@ -225,7 +292,7 @@ def inventario(request):
             stock_minimo=request.POST.get('stock_minimo', 2)
         )
         return redirect('inventario')
-    
+
     return render(request, 'gestion/inventario.html', {'repuestos': repuestos, 'busqueda': busqueda})
 
 @login_required
@@ -292,53 +359,35 @@ def eliminar_cliente(request, cliente_id):
 @login_required
 @user_passes_test(es_admin)
 def reportes_ganancias(request):
-    # 1. Capturamos las fechas
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
-    
+
     fichas = Ficha.objects.filter(estado='ENT', eliminado=False).order_by('-fecha_ingreso')
 
-    # Validación: Solo filtramos si AMBAS fechas tienen contenido y no son "None" o vacías
     if fecha_inicio and fecha_fin and fecha_inicio != 'None' and fecha_fin != 'None':
         try:
             fichas = fichas.filter(fecha_ingreso__range=[fecha_inicio, f"{fecha_fin} 23:59:59"])
-        except ValidationError:
-            # Si el formato de fecha es basura, no filtramos nada para evitar el crash
+        except:
             pass
 
-    # 2. Exportación a Excel
     if 'exportar' in request.GET:
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="Reporte_Ganancias_LGI.xlsx"'
-        
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Ganancias"
-        
-        # Cabeceras
         ws.append(['Fecha Ingreso', 'Código', 'Cliente', 'Equipo', 'Mano de Obra', 'Repuesto', 'Total'])
-        
         for f in fichas:
-            # Usamos getattr o or 0 para evitar errores si algún costo es None en la DB
             mo = f.costo_mo or 0
             rep = f.costo_repuesto or 0
             ws.append([
                 f.fecha_ingreso.strftime('%d/%m/%Y') if f.fecha_ingreso else '',
-                f.codigo_compuesto,
-                f.equipo.cliente.nombre_apellido,
-                f.equipo.marca_modelo,
-                mo,
-                rep,
-                mo + rep
+                f.codigo_compuesto, f.equipo.cliente.nombre_apellido,
+                f.equipo.marca_modelo, mo, rep, mo + rep
             ])
-            
         wb.save(response)
         return response
 
-    # ... (Resto de tu lógica de cálculos: total_mo, total_rep, promedio, etc.)
-    # Asegurate de pasar 'fichas' (el queryset) al context para el template
-    
-    # Cálculos rápidos
     total_mo = fichas.aggregate(Sum('costo_mo'))['costo_mo__sum'] or 0
     total_rep = fichas.aggregate(Sum('costo_repuesto'))['costo_repuesto__sum'] or 0
     total_ingresos = total_mo + total_rep
@@ -346,229 +395,436 @@ def reportes_ganancias(request):
     promedio = total_ingresos / count if count > 0 else 0
 
     return render(request, 'gestion/reportes.html', {
-        'fichas': fichas,
-        'total_mo': total_mo, 
-        'total_repuestos_venta': total_rep,
-        'total_ingresos': total_ingresos, 
-        'fichas_count': count,
-        'promedio': round(promedio, 2),
+        'fichas': fichas, 'total_mo': total_mo,
+        'total_repuestos_venta': total_rep, 'total_ingresos': total_ingresos,
+        'fichas_count': count, 'promedio': round(promedio, 2),
         'fecha_inicio': fecha_inicio if fecha_inicio != 'None' else '',
         'fecha_fin': fecha_fin if fecha_fin != 'None' else ''
     })
-    
- 
+
 @login_required
 @user_passes_test(es_admin)
 def eliminar_registro_reporte(request, ficha_id):
-    """
-    Elimina (borrado lógico) una ficha desde el panel de reportes.
-    Solo accesible por el usuario root/superuser.
-    """
-    # Verificación extra de seguridad
     if not request.user.is_superuser:
         return HttpResponse("No tenés permisos para eliminar registros contables.", status=403)
-    
-    # Obtenemos la ficha o tiramos 404 si no existe
     ficha = get_object_or_404(Ficha, id=ficha_id)
-    
-    # Aplicamos borrado lógico para que no aparezca en ganancias ni dashboard
     ficha.eliminado = True
     ficha.fecha_eliminacion = timezone.now()
     ficha.save()
-    
-    # Redirigimos de vuelta a la página de reportes
     return redirect('reportes')
+
 @login_required
 def generar_pdf_ingreso(request, ficha_id):
     ficha = get_object_or_404(Ficha, id=ficha_id)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="Orden_{ficha.codigo_compuesto}.pdf"'
-    
+
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
-   # --- AJUSTE LOGO MAC DEFINITIVO ---
-    # Si el Nav lo muestra, esta ruta es la que Django reconoce.
-    # Usamos find() para obtener la ruta del sistema de archivos.
+
+    # Colores de marca
+    GOLD   = colors.HexColor('#D4A017')
+    BLACK  = colors.HexColor('#111111')
+    DARK   = colors.HexColor('#1a1a1a')
+    GRAY   = colors.HexColor('#555555')
+    LGRAY  = colors.HexColor('#dddddd')
+    WHITE  = colors.white
+
+    margin = 1.5 * cm
+
+    # ── HEADER NEGRO ──────────────────────────────────────
+    header_h = 2.8 * cm
+    p.setFillColor(BLACK)
+    p.rect(0, height - header_h, width, header_h, fill=1, stroke=0)
+
+    # Logo — ocupa el lado izquierdo completo (ya contiene el texto de marca)
     logo_path = find('img/logo.png')
-    
     if logo_path:
         try:
-            # Dibujamos el logo. Al usar find() obtenemos la ruta absoluta que ReportLab necesita.
-            p.drawImage(logo_path, 1.5 * cm, height - 11.3 * cm, width=6 * cm, preserveAspectRatio=True, mask='auto')
+            p.drawImage(logo_path, margin, height - header_h + 0.15 * cm,
+                        width=7 * cm, height=2.5 * cm,
+                        preserveAspectRatio=True, mask='auto')
         except:
             pass
-    # ----------------------------------
-    # Encabezado Orden
-    p.rect(width - 7.5 * cm, height - 3.2 * cm, 5.5 * cm, 1.6 * cm)
-    p.setFont("Helvetica-Bold", 12)
-    p.drawCentredString(width - 4.75 * cm, height - 2.2 * cm, "ORDEN DE TRABAJO")
-    p.setFont("Helvetica-Bold", 16)
-    p.drawCentredString(width - 4.75 * cm, height - 2.9 * cm, f"#{ficha.codigo_compuesto}")
-    
-    p.setFont("Helvetica", 10)
-    p.drawRightString(width - 2 * cm, height - 4.2 * cm, "Resistencia, Chaco | Tel: 3624-605132")
-    p.line(1.5 * cm, height - 4.5 * cm, width - 1.5 * cm, height - 4.5 * cm)
-    
-    # Datos Principales
-    y = height - 6 * cm
-    p.setFont("Helvetica-Bold", 11); p.drawString(2 * cm, y, "CLIENTE:"); p.setFont("Helvetica", 11); p.drawString(6 * cm, y, f"{ficha.equipo.cliente.nombre_apellido}")
-    y -= 1 * cm
-    p.setFont("Helvetica-Bold", 11); p.drawString(2 * cm, y, "EQUIPO:"); p.setFont("Helvetica", 11); p.drawString(6 * cm, y, f"{ficha.equipo.marca_modelo}")
-    y -= 1 * cm
-    p.setFont("Helvetica-Bold", 11); p.drawString(2 * cm, y, "IMEI / SN:"); p.setFont("Helvetica", 11); p.drawString(6 * cm, y, f"{ficha.equipo.identificador}")
-    y -= 1 * cm
-    p.setFont("Helvetica-Bold", 11); p.drawString(2 * cm, y, "FALLA:"); p.setFont("Helvetica", 11); p.drawString(6 * cm, y, f"{ficha.falla_cliente}")
-    
-    # RECUADRO DE TÉRMINOS AJUSTADO (Simetría mejorada)
-    p.setStrokeColor(colors.black)
-    p.rect(1.5 * cm, 4.5 * cm, width - 3 * cm, 4 * cm)
-    p.setFont("Helvetica-Bold", 10); p.drawString(2 * cm, 8.1 * cm, "TÉRMINOS Y CONDICIONES:")
-    
-    text = p.beginText(2 * cm, 7.5 * cm); text.setFont("Helvetica", 10); text.setLeading(14)
-    lineas = [
-        "• El presupuesto tiene una validez de 10 días corridos.",
-        "• La garantía es de 90 días sobre el trabajo realizado.",
-        "• Transcurridos 90 días del aviso de retiro, el equipo se considera en abandono.",
-        "• Es OBLIGATORIO presentar este comprobante para retirar el equipo.",
-        "• LGI Electrónics no se responsabiliza por la pérdida de datos en el equipo."
+
+    # Número de orden (derecha del header)
+    p.setFillColor(GOLD)
+    p.setFont("Helvetica-Bold", 18)
+    p.drawRightString(width - margin, height - 1.4 * cm, f"#{ficha.codigo_compuesto}")
+    p.setFillColor(GRAY)
+    p.setFont("Helvetica", 7.5)
+    p.drawRightString(width - margin, height - 2.1 * cm, "ORDEN DE TRABAJO")
+
+    # ── BANDA DORADA ──────────────────────────────────────
+    banda_y = height - header_h - 0.75 * cm
+    p.setFillColor(GOLD)
+    p.rect(0, banda_y, width, 0.75 * cm, fill=1, stroke=0)
+    p.setFillColor(BLACK)
+    p.setFont("Helvetica-Bold", 8)
+    p.drawString(margin, banda_y + 0.22 * cm, "COMPROBANTE DE RECEPCIÓN DE EQUIPO")
+    fecha_str = ficha.fecha_ingreso.strftime('%d/%m/%Y') if ficha.fecha_ingreso else ''
+    p.drawRightString(width - margin, banda_y + 0.22 * cm, fecha_str)
+
+    # ── FUNCIÓN HELPER: dibuja sección con borde dorado izquierdo ──
+    def draw_section(y_top, rows, section_h):
+        """rows = lista de (label, valor)"""
+        p.setFillColor(GOLD)
+        p.rect(margin, y_top - section_h, 0.18 * cm, section_h, fill=1, stroke=0)
+        p.setStrokeColor(LGRAY)
+        p.setLineWidth(0.3)
+        p.rect(margin + 0.18 * cm, y_top - section_h,
+               width - 2 * margin - 0.18 * cm, section_h, fill=0, stroke=1)
+        row_h = section_h / len(rows)
+        for i, (lbl, val) in enumerate(rows):
+            ry = y_top - (i + 0.72) * row_h
+            p.setFillColor(GRAY)
+            p.setFont("Helvetica-Bold", 7.5)
+            p.drawString(margin + 0.5 * cm, ry, lbl.upper())
+            p.setFillColor(BLACK)
+            p.setFont("Helvetica", 10)
+            p.drawString(margin + 0.5 * cm + 3.5 * cm, ry, str(val))
+            if i < len(rows) - 1:
+                p.setStrokeColor(LGRAY)
+                p.setLineWidth(0.3)
+                p.line(margin + 0.4 * cm, ry - 0.25 * cm,
+                       width - margin - 0.2 * cm, ry - 0.25 * cm)
+
+    # ── SECCIÓN CLIENTE ───────────────────────────────────
+    y = banda_y - 0.4 * cm
+    p.setFillColor(GRAY)
+    p.setFont("Helvetica-Bold", 7)
+    p.drawString(margin + 0.4 * cm, y - 0.02 * cm, "DATOS DEL CLIENTE")
+    y -= 0.35 * cm
+
+    cliente_rows = [
+        ("Nombre",   ficha.equipo.cliente.nombre_apellido),
+        ("Teléfono", ficha.equipo.cliente.telefono),
+        ("Email",    ficha.equipo.cliente.email or "—"),
     ]
-    for l in lineas: text.textLine(l)
-    p.drawText(text)
-    
-    # Firmas centradas
-    p.line(2.5 * cm, 2.5 * cm, 8.5 * cm, 2.5 * cm); p.drawCentredString(5.5 * cm, 2 * cm, "Firma del Cliente")
-    p.line(width - 8.5 * cm, 2.5 * cm, width - 2.5 * cm, 2.5 * cm); p.drawCentredString(width - 5.5 * cm, 2 * cm, "LGI Electrónics")
-    
-    p.showPage(); p.save()
+    sec_h = 2.8 * cm
+    draw_section(y, cliente_rows, sec_h)
+    y -= sec_h + 0.45 * cm
+
+    # ── SECCIÓN EQUIPO ────────────────────────────────────
+    p.setFillColor(GRAY)
+    p.setFont("Helvetica-Bold", 7)
+    p.drawString(margin + 0.4 * cm, y - 0.02 * cm, "DATOS DEL EQUIPO")
+    y -= 0.35 * cm
+
+    equipo_rows = [
+        ("Modelo",    ficha.equipo.marca_modelo),
+        ("IMEI / SN", ficha.equipo.identificador or "—"),
+        ("Falla",     ficha.falla_cliente),
+    ]
+    if ficha.obs_recepcion:
+        equipo_rows.append(("Estética", ficha.obs_recepcion))
+
+    sec_h2 = len(equipo_rows) * 0.95 * cm
+    draw_section(y, equipo_rows, sec_h2)
+    y -= sec_h2 + 0.45 * cm
+
+    # ── SECCIÓN TÉRMINOS ──────────────────────────────────
+    p.setFillColor(GRAY)
+    p.setFont("Helvetica-Bold", 7)
+    p.drawString(margin + 0.4 * cm, y - 0.02 * cm, "TÉRMINOS Y CONDICIONES")
+    y -= 0.35 * cm
+
+    terminos_h = 3.2 * cm
+    p.setFillColor(GOLD)
+    p.rect(margin, y - terminos_h, 0.18 * cm, terminos_h, fill=1, stroke=0)
+    p.setStrokeColor(LGRAY)
+    p.setLineWidth(0.3)
+    p.rect(margin + 0.18 * cm, y - terminos_h,
+           width - 2 * margin - 0.18 * cm, terminos_h, fill=0, stroke=1)
+
+    lineas = [
+        "1. El presupuesto tiene una validez de 10 días corridos.",
+        "2. La garantía es de 90 días sobre el trabajo realizado.",
+        "3. Transcurridos 90 días del aviso de retiro, el equipo se considera en abandono (Art. 2587 CCCN).",
+        "4. Es OBLIGATORIO presentar este comprobante para retirar el equipo.",
+        "5. LGI Electrónics no se responsabiliza por la pérdida de datos en el equipo.",
+    ]
+    ty = y - 0.45 * cm
+    for linea in lineas:
+        p.setFillColor(GRAY)
+        p.setFont("Helvetica", 7.8)
+        p.drawString(margin + 0.5 * cm, ty, linea)
+        ty -= 0.5 * cm
+
+    y -= terminos_h + 0.6 * cm
+
+    # ── FIRMAS ────────────────────────────────────────────
+    firma_y = 3.2 * cm
+    p.setStrokeColor(colors.HexColor('#aaaaaa'))
+    p.setLineWidth(0.5)
+    p.line(margin, firma_y, margin + 6 * cm, firma_y)
+    p.line(width - margin - 6 * cm, firma_y, width - margin, firma_y)
+    p.setFillColor(GRAY)
+    p.setFont("Helvetica", 8)
+    p.drawCentredString(margin + 3 * cm, firma_y - 0.4 * cm, "Firma del Cliente")
+    p.drawCentredString(width - margin - 3 * cm, firma_y - 0.4 * cm, "LGI Electrónics")
+
+    # ── FOOTER NEGRO ──────────────────────────────────────
+    footer_h = 1 * cm
+    p.setFillColor(BLACK)
+    p.rect(0, 0, width, footer_h, fill=1, stroke=0)
+    p.setFillColor(GOLD)
+    p.setFont("Helvetica-Bold", 7)
+    p.drawCentredString(width / 2, 0.38 * cm, "LGI ELECTRÓNICS  —  Resistencia, Chaco  —  Tel: 3624-605132  —  lgi-electronics.netlify.app")
+
+    p.showPage()
+    p.save()
     return response
-
-
 
 @login_required
 @user_passes_test(es_admin)
 def generar_pdf_pedidos(request):
-    """
-    Mejora visual del PDF de pedidos respetando el flujo de selección previo
-    en preparar_pedido.html.
-    """
-    # Recuperamos los repuestos bajo stock para la vista previa
     repuestos_bajo_stock = Repuesto.objects.filter(cantidad__lte=F('stock_minimo'))
-    
+
     if request.method == 'POST':
-        # Tomamos los ítems que vos marcaste en el checkbox del HTML
         ids_seleccionados = request.POST.getlist('items_seleccionados')
-        
         if not ids_seleccionados:
             return redirect('pdf_pedidos')
 
-        # Iniciamos la respuesta PDF
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="Pedido_Repuestos_LGI.pdf"'
-        
         p = canvas.Canvas(response, pagesize=A4)
         width, height = A4
-        
-        # --- DISEÑO PROFESIONAL (MEJORA SOLICITADA) ---
-        # 1. Logo LGI
-        logo_path = find('img/logo.png')
-        if logo_path:
-            try:
-                p.drawImage(logo_path, 1.5 * cm, 18 * cm, width=5 * cm, preserveAspectRatio=True, mask='auto')
-            except:
-                pass
 
-        # 2. Título y Fecha
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(10.5 * cm, 25.5 * cm, "ORDEN DE COMPRA / PEDIDO")
-        
-        p.setFont("Helvetica", 10)
-        p.drawString(1.5 * cm, 24.7 * cm, f"Fecha de emisión: {timezone.now().strftime('%d/%m/%Y')}")
-        
-        # Línea de encabezado
-        p.setStrokeColor(colors.black)
-        p.setLineWidth(1)
-        p.line(1.5 * cm, 24.5 * cm, width - 1.5 * cm, 24.5 * cm)
-        
-        # 3. Cabecera de Tabla
-        y = 23.5 * cm
-        p.setFont("Helvetica-Bold", 11)
-        p.drawString(2 * cm, y, "DETALLE DEL REPUESTO / INSUMO")
-        p.drawCentredString(width - 3 * cm, y, "CANTIDAD")
-        
-        y -= 0.8 * cm
-        p.setFont("Helvetica", 11)
-        
-        # 4. Listado de repuestos seleccionados
+        GOLD  = colors.HexColor('#D4A017')
+        BLACK = colors.HexColor('#111111')
+        GRAY  = colors.HexColor('#555555')
+        LGRAY = colors.HexColor('#dddddd')
+        FGRAY = colors.HexColor('#f8f8f8')
+        margin = 1.5 * cm
+
+        def draw_header_pedido(canvas_obj):
+            header_h = 2.8 * cm
+            canvas_obj.setFillColor(BLACK)
+            canvas_obj.rect(0, height - header_h, width, header_h, fill=1, stroke=0)
+            logo_path = find('img/logo.png')
+            if logo_path:
+                try:
+                    canvas_obj.drawImage(logo_path, margin, height - header_h + 0.15 * cm,
+                                         width=7 * cm, height=2.5 * cm,
+                                         preserveAspectRatio=True, mask='auto')
+                except:
+                    pass
+            canvas_obj.setFillColor(GOLD)
+            canvas_obj.setFont("Helvetica-Bold", 13)
+            canvas_obj.drawRightString(width - margin, height - 1.5 * cm, "ORDEN DE COMPRA")
+            canvas_obj.setFillColor(GRAY)
+            canvas_obj.setFont("Helvetica", 7.5)
+            canvas_obj.drawRightString(width - margin, height - 2.1 * cm,
+                                       f"PEDIDO DE REPUESTOS — {timezone.now().strftime('%d/%m/%Y')}")
+            banda_y = height - header_h - 0.75 * cm
+            canvas_obj.setFillColor(GOLD)
+            canvas_obj.rect(0, banda_y, width, 0.75 * cm, fill=1, stroke=0)
+            canvas_obj.setFillColor(BLACK)
+            canvas_obj.setFont("Helvetica-Bold", 8)
+            canvas_obj.drawString(margin, banda_y + 0.22 * cm, "DETALLE DE REPUESTOS A REPONER")
+            return banda_y
+
+        banda_y = draw_header_pedido(p)
+
+        # Cabecera de tabla
+        tabla_y = banda_y - 0.5 * cm
+        col_cant = 3.5 * cm
+        tabla_w  = width - 2 * margin
+
+        p.setFillColor(FGRAY)
+        p.rect(margin + 0.18 * cm, tabla_y - 0.6 * cm, tabla_w - 0.18 * cm, 0.6 * cm, fill=1, stroke=0)
+        p.setFillColor(GOLD)
+        p.rect(margin, tabla_y - 0.6 * cm, 0.18 * cm, 0.6 * cm, fill=1, stroke=0)
+        p.setStrokeColor(LGRAY); p.setLineWidth(0.3)
+        p.rect(margin + 0.18 * cm, tabla_y - 0.6 * cm, tabla_w - 0.18 * cm, 0.6 * cm, fill=0, stroke=1)
+        p.setFillColor(GRAY); p.setFont("Helvetica-Bold", 7.5)
+        p.drawString(margin + 0.5 * cm, tabla_y - 0.38 * cm, "REPUESTO / INSUMO")
+        p.drawCentredString(width - margin - col_cant / 2, tabla_y - 0.38 * cm, "CANTIDAD")
+
+        y = tabla_y - 0.6 * cm
+        alternado = False
+
         for r_id in ids_seleccionados:
             repuesto = get_object_or_404(Repuesto, id=r_id)
-            # Obtenemos la cantidad que editaste manualmente en el HTML
             cantidad_final = request.POST.get(f'cantidad_{r_id}', 1)
-            
-            # Línea divisoria tenue
-            p.setStrokeColor(colors.lightgrey)
-            p.setLineWidth(0.5)
-            p.line(1.5 * cm, y - 0.2 * cm, width - 1.5 * cm, y - 0.2 * cm)
-            
-            # Datos (Nombre y Cantidad)
-            p.setStrokeColor(colors.black)
-            p.drawString(2 * cm, y, repuesto.nombre)
-            
-            p.setFont("Helvetica-Bold", 12)
-            p.drawCentredString(width - 3 * cm, y, f"x {cantidad_final}")
-            p.setFont("Helvetica", 11)
-            
-            y -= 1 * cm
-            
-            # Control de fin de página
-            if y < 3 * cm:
-                p.showPage()
-                y = 26 * cm
-                p.setFont("Helvetica", 11)
+            row_h = 0.85 * cm
 
-        # 5. Pie de página fijo
-        p.setStrokeColor(colors.black)
-        p.setLineWidth(1)
-        p.line(1.5 * cm, 2.5 * cm, width - 1.5 * cm, 2.5 * cm)
-        
-        p.setFont("Helvetica-Oblique", 9)
-        p.drawCentredString(width/2, 2 * cm, "LGI Electrónics - Servicio Técnico Profesional - Resistencia, Chaco")
-        
+            if y - row_h < 1.2 * cm:
+                p.setStrokeColor(LGRAY); p.setLineWidth(0.3)
+                p.line(margin + 0.18 * cm, y, width - margin, y)
+                p.showPage()
+                banda_y = draw_header_pedido(p)
+                y = banda_y - 0.5 * cm - 0.6 * cm
+                alternado = False
+
+            if alternado:
+                p.setFillColor(colors.HexColor('#f8f8f8'))
+                p.rect(margin + 0.18 * cm, y - row_h, tabla_w - 0.18 * cm, row_h, fill=1, stroke=0)
+
+            p.setFillColor(GOLD)
+            p.rect(margin, y - row_h, 0.18 * cm, row_h, fill=1, stroke=0)
+            p.setStrokeColor(LGRAY); p.setLineWidth(0.3)
+            p.line(margin + 0.18 * cm, y - row_h, width - margin, y - row_h)
+            p.line(margin, y, width - margin, y)
+            p.line(width - margin - col_cant, y - row_h, width - margin - col_cant, y)
+            p.rect(margin + 0.18 * cm, y - row_h, tabla_w - 0.18 * cm, row_h, fill=0, stroke=1)
+
+            p.setFillColor(BLACK); p.setFont("Helvetica", 10)
+            p.drawString(margin + 0.5 * cm, y - 0.55 * cm, repuesto.nombre)
+
+            p.setFillColor(GOLD); p.setFont("Helvetica-Bold", 12)
+            p.drawCentredString(width - margin - col_cant / 2, y - 0.55 * cm, f"× {cantidad_final}")
+
+            y -= row_h
+            alternado = not alternado
+
+        # Footer
+        footer_h = 0.8 * cm
+        p.setFillColor(BLACK)
+        p.rect(0, 0, width, footer_h, fill=1, stroke=0)
+        p.setFillColor(GOLD); p.setFont("Helvetica-Bold", 7)
+        p.drawCentredString(width / 2, 0.28 * cm,
+                            "LGI ELECTRÓNICS  —  Resistencia, Chaco  —  Tel: 3624-605132  —  lgi-electronics.netlify.app")
+
         p.save()
         return response
 
-    # Retorno al template original con la variable exacta que usás
     return render(request, 'gestion/preparar_pedido.html', {'repuestos_bajo_stock': repuestos_bajo_stock})
 
 @login_required
 def generar_pdf_stock_total(request):
-    """Planilla de control físico con formato de tabla profesional."""
     repuestos = Repuesto.objects.all().order_by('nombre')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Stock_Fisico.pdf"'
-    p = canvas.Canvas(response, pagesize=A4); width, height = A4
-    
-    def encabezado(canvas_obj, pag):
-        canvas_obj.setFont("Helvetica-Bold", 14)
-        canvas_obj.drawString(1.5 * cm, height - 2 * cm, "PLANILLA DE CONTROL DE STOCK FÍSICO")
-        canvas_obj.setFont("Helvetica", 9)
-        canvas_obj.drawString(1.5 * cm, height - 2.5 * cm, f"Fecha: {timezone.now().strftime('%d/%m/%Y')} | Pág: {pag}")
-        canvas_obj.line(1.5 * cm, height - 2.7 * cm, width - 1.5 * cm, height - 2.7 * cm)
-        y_ini = height - 3.2 * cm
-        canvas_obj.setFont("Helvetica-Bold", 10)
-        canvas_obj.drawString(1.8 * cm, y_ini, "DESCRIPCIÓN")
-        canvas_obj.drawCentredString(14 * cm, y_ini, "SISTEMA")
-        canvas_obj.drawCentredString(17 * cm, y_ini, "REAL")
-        return y_ini - 0.5 * cm
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
 
-    y = encabezado(p, 1)
+    GOLD  = colors.HexColor('#D4A017')
+    BLACK = colors.HexColor('#111111')
+    GRAY  = colors.HexColor('#555555')
+    LGRAY = colors.HexColor('#dddddd')
+    FGRAY = colors.HexColor('#f8f8f8')
+    margin = 1.5 * cm
+
+    col_sistem = 3.5 * cm
+    col_real   = 3.5 * cm
+    tabla_w    = width - 2 * margin
+
+    def draw_header_stock(canvas_obj, pag):
+        header_h = 2.8 * cm
+        canvas_obj.setFillColor(BLACK)
+        canvas_obj.rect(0, height - header_h, width, header_h, fill=1, stroke=0)
+        logo_path = find('img/logo.png')
+        if logo_path:
+            try:
+                canvas_obj.drawImage(logo_path, margin, height - header_h + 0.15 * cm,
+                                     width=7 * cm, height=2.5 * cm,
+                                     preserveAspectRatio=True, mask='auto')
+            except:
+                pass
+        canvas_obj.setFillColor(GOLD)
+        canvas_obj.setFont("Helvetica-Bold", 13)
+        canvas_obj.drawRightString(width - margin, height - 1.5 * cm, "CONTROL DE STOCK")
+        canvas_obj.setFillColor(GRAY)
+        canvas_obj.setFont("Helvetica", 7.5)
+        canvas_obj.drawRightString(width - margin, height - 2.1 * cm,
+                                   f"PLANILLA FÍSICA — {timezone.now().strftime('%d/%m/%Y')}  |  Pág: {pag}")
+        banda_y = height - header_h - 0.75 * cm
+        canvas_obj.setFillColor(GOLD)
+        canvas_obj.rect(0, banda_y, width, 0.75 * cm, fill=1, stroke=0)
+        canvas_obj.setFillColor(BLACK)
+        canvas_obj.setFont("Helvetica-Bold", 8)
+        canvas_obj.drawString(margin, banda_y + 0.22 * cm, "VERIFICACIÓN DE INVENTARIO FÍSICO")
+
+        # Cabecera de columnas
+        cab_y = banda_y - 0.5 * cm
+        canvas_obj.setFillColor(FGRAY)
+        canvas_obj.rect(margin + 0.18 * cm, cab_y - 0.6 * cm, tabla_w - 0.18 * cm, 0.6 * cm, fill=1, stroke=0)
+        canvas_obj.setFillColor(GOLD)
+        canvas_obj.rect(margin, cab_y - 0.6 * cm, 0.18 * cm, 0.6 * cm, fill=1, stroke=0)
+        canvas_obj.setStrokeColor(LGRAY); canvas_obj.setLineWidth(0.3)
+        canvas_obj.rect(margin + 0.18 * cm, cab_y - 0.6 * cm, tabla_w - 0.18 * cm, 0.6 * cm, fill=0, stroke=1)
+        canvas_obj.setFillColor(GRAY); canvas_obj.setFont("Helvetica-Bold", 7.5)
+        canvas_obj.drawString(margin + 0.5 * cm, cab_y - 0.38 * cm, "DESCRIPCIÓN DEL REPUESTO / INSUMO")
+        canvas_obj.drawCentredString(width - margin - col_real - col_sistem / 2, cab_y - 0.38 * cm, "SISTEMA")
+        canvas_obj.drawCentredString(width - margin - col_real / 2, cab_y - 0.38 * cm, "REAL")
+
+        return cab_y - 0.6 * cm
+
+    y = draw_header_stock(p, 1)
     pag = 1
+    alternado = False
+
     for r in repuestos:
-        p.setFont("Helvetica", 9)
-        p.drawString(1.8 * cm, y, r.nombre[:60])
-        p.drawCentredString(14 * cm, y, str(r.cantidad))
-        p.rect(15.5 * cm, y - 0.1 * cm, 3 * cm, 0.5 * cm)
-        y -= 0.8 * cm
-        if y < 2 * cm:
-            p.showPage(); pag += 1; y = encabezado(p, pag)
-            
-    p.save(); return response
+        row_h = 0.82 * cm
+        if y - row_h < 1.2 * cm:
+            # footer
+            p.setFillColor(BLACK)
+            p.rect(0, 0, width, 0.8 * cm, fill=1, stroke=0)
+            p.setFillColor(GOLD); p.setFont("Helvetica-Bold", 7)
+            p.drawCentredString(width / 2, 0.28 * cm,
+                                "LGI ELECTRÓNICS  —  Resistencia, Chaco  —  Tel: 3624-605132")
+            p.showPage()
+            pag += 1
+            y = draw_header_stock(p, pag)
+            alternado = False
+
+        if alternado:
+            p.setFillColor(FGRAY)
+            p.rect(margin + 0.18 * cm, y - row_h, tabla_w - 0.18 * cm, row_h, fill=1, stroke=0)
+
+        p.setFillColor(GOLD)
+        p.rect(margin, y - row_h, 0.18 * cm, row_h, fill=1, stroke=0)
+        p.setStrokeColor(LGRAY); p.setLineWidth(0.3)
+        p.line(margin + 0.18 * cm, y - row_h, width - margin, y - row_h)
+        p.rect(margin + 0.18 * cm, y - row_h, tabla_w - 0.18 * cm, row_h, fill=0, stroke=1)
+
+        # Líneas verticales separadoras
+        p.line(width - margin - col_real - col_sistem, y - row_h,
+               width - margin - col_real - col_sistem, y)
+        p.line(width - margin - col_real, y - row_h,
+               width - margin - col_real, y)
+
+        # Datos
+        p.setFillColor(BLACK); p.setFont("Helvetica", 9.5)
+        p.drawString(margin + 0.5 * cm, y - 0.52 * cm, r.nombre[:55])
+
+        p.setFillColor(GOLD); p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(width - margin - col_real - col_sistem / 2, y - 0.52 * cm, str(r.cantidad))
+
+        # Recuadro para anotar cantidad real
+        box_w = 2.2 * cm; box_h = 0.5 * cm
+        bx = width - margin - col_real / 2 - box_w / 2
+        by = y - row_h / 2 - box_h / 2
+        p.setStrokeColor(LGRAY); p.setLineWidth(0.5)
+        p.setFillColor(colors.white)
+        p.rect(bx, by, box_w, box_h, fill=1, stroke=1)
+
+        y -= row_h
+        alternado = not alternado
+
+    # Footer última página
+    p.setFillColor(BLACK)
+    p.rect(0, 0, width, 0.8 * cm, fill=1, stroke=0)
+    p.setFillColor(GOLD); p.setFont("Helvetica-Bold", 7)
+    p.drawCentredString(width / 2, 0.28 * cm,
+                        "LGI ELECTRÓNICS  —  Resistencia, Chaco  —  Tel: 3624-605132  —  lgi-electronics.netlify.app")
+    p.save()
+    return response
+
+
+# --- 7. REENVÍO DE EMAIL ---
+@login_required
+def reenviar_email_ingreso(request, ficha_id):
+    ficha = get_object_or_404(Ficha, id=ficha_id)
+    cliente = ficha.equipo.cliente
+    equipo = ficha.equipo
+
+    if cliente.email:
+        try:
+            _enviar_email_lgi(cliente, equipo, ficha)
+        except:
+            pass
+
+    return redirect('detalle_ficha', ficha_id=ficha_id)

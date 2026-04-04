@@ -1,85 +1,61 @@
 {% extends 'gestion/base.html' %}
 {% block content %}
 <style>
-    /* AJUSTES PARA IPHONE / MÓVIL */
-    @media (max-width: 768px) {
-        .card-header {
-            flex-direction: column;
-            text-align: center;
-        }
+    .form-check-input {
+        width: 18px; height: 18px;
+        background-color: var(--lgi-dark);
+        border-color: var(--lgi-border);
+        cursor: pointer;
+    }
+    .form-check-input:checked {
+        background-color: var(--lgi-gold);
+        border-color: var(--lgi-gold);
+    }
 
+    @media (max-width: 768px) {
+        .card-header { flex-direction: column; text-align: center; gap: 6px; }
         thead { display: none; }
         table, tbody, tr, td { display: block; width: 100%; }
-
         tr {
-            margin-bottom: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            padding: 12px;
-            background: #fff;
-            position: relative;
-        }
-
-        td {
-            text-align: left;
-            border: none !important;
-            padding: 8px 5px !important;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* El checkbox lo hacemos más grande para el pulgar */
-        .form-check-input {
-            width: 25px;
-            height: 25px;
-            margin: 0;
-        }
-
-        /* Nombre del repuesto destacado */
-        td:nth-of-type(2) {
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-bottom: 1px solid #eee !important;
-            margin-bottom: 8px;
-            padding-bottom: 10px !important;
-        }
-
-        /* Etiquetas para los datos */
-        td:nth-of-type(1):before { content: "¿INCLUIR EN PEDIDO?"; font-weight: bold; font-size: 0.75rem; color: #666; }
-        td:nth-of-type(3):before { content: "STOCK ACTUAL:"; font-weight: bold; font-size: 0.75rem; color: #666; }
-        td:nth-of-type(4):before { content: "CANTIDAD A PEDIR:"; font-weight: bold; font-size: 0.75rem; color: #666; }
-
-        /* Ajuste del input numérico para que sea fácil de editar */
-        .form-control-sm {
-            width: 100px !important;
-            height: 40px;
-            font-size: 16px !important; /* Evita zoom automático */
-            text-align: center;
-        }
-
-        .btn-success {
-            padding: 15px;
-            font-weight: bold;
-            font-size: 1rem;
+            margin-bottom: 12px;
             border-radius: 10px;
+            padding: 12px 14px;
         }
+        td {
+            text-align: left; border: none !important;
+            padding: 6px 0 !important;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .form-check-input { width: 26px; height: 26px; }
+        td:nth-of-type(2) {
+            font-size: 1rem; font-weight: bold;
+            border-bottom: 1px solid var(--lgi-border) !important;
+            margin-bottom: 6px; padding-bottom: 10px !important;
+        }
+        td:nth-of-type(1):before { content: "¿INCLUIR?"; font-weight: bold; font-size: 0.7rem; color: var(--lgi-muted); }
+        td:nth-of-type(3):before { content: "STOCK ACTUAL:"; font-weight: bold; font-size: 0.7rem; color: var(--lgi-muted); }
+        td:nth-of-type(4):before { content: "CANTIDAD A PEDIR:"; font-weight: bold; font-size: 0.7rem; color: var(--lgi-muted); }
+        .form-control-sm { width: 100px !important; height: 42px; font-size: 16px !important; text-align: center; }
     }
 </style>
 
-<div class="card shadow border-0">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Preparar Pedido de Repuestos</h5>
-        <small class="opacity-75">Seleccioná qué incluir en el PDF</small>
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center py-3"
+         style="background:var(--lgi-gold);border-radius:9px 9px 0 0;">
+        <h5 class="mb-0 fw-bold" style="color:var(--lgi-black);">
+            <i class="bi bi-cart-plus me-2"></i>Preparar Pedido de Repuestos
+        </h5>
+        <small style="color:var(--lgi-black);opacity:0.6;">Seleccioná qué incluir en el PDF</small>
     </div>
+
     <div class="card-body p-2 p-md-4">
         <form method="POST" action="{% url 'pdf_pedidos' %}">
             {% csrf_token %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+            <div style="border-radius:8px;overflow:hidden;border:1px solid var(--lgi-border);">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
                         <tr>
-                            <th style="width: 50px;">¿Pedir?</th>
+                            <th style="width:50px;">¿Pedir?</th>
                             <th>Repuesto</th>
                             <th>Stock Actual</th>
                             <th>Cantidad a Pedir</th>
@@ -87,19 +63,29 @@
                     </thead>
                     <tbody>
                         {% for r in repuestos_bajo_stock %}
-                        <tr>
+                        <tr style="background:#1a0000;border-left:3px solid var(--state-inact);">
                             <td>
-                                <input type="checkbox" name="items_seleccionados" value="{{ r.id }}" class="form-check-input" checked>
+                                <input type="checkbox" name="items_seleccionados"
+                                       value="{{ r.id }}" class="form-check-input" checked>
                             </td>
-                            <td class="text-dark">{{ r.nombre }}</td>
-                            <td><span class="badge bg-danger px-3">{{ r.cantidad }}</span></td>
+                            <td class="fw-bold" style="color:var(--lgi-text);">{{ r.nombre }}</td>
                             <td>
-                                <input type="number" name="cantidad_{{ r.id }}" value="{{ r.stock_minimo|add:r.stock_minimo }}" class="form-control form-control-sm border-primary" style="width: 80px;">
+                                <span class="badge"
+                                      style="background:#2a0a0a;border:1px solid #5c1a1a;color:var(--state-inact);padding:5px 10px;">
+                                    {{ r.cantidad }} u.
+                                </span>
+                            </td>
+                            <td>
+                                <input type="number" name="cantidad_{{ r.id }}"
+                                       value="{{ r.stock_minimo|add:r.stock_minimo }}"
+                                       class="form-control form-control-sm"
+                                       style="width:80px;border-color:var(--lgi-gold);text-align:center;">
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="4" class="text-center py-5" style="color:var(--lgi-muted);">
+                                <i class="bi bi-check-circle fs-1 d-block mb-2" style="color:var(--state-lst);opacity:0.5;"></i>
                                 No hay repuestos con bajo stock para pedir.
                             </td>
                         </tr>
@@ -110,8 +96,8 @@
 
             {% if repuestos_bajo_stock %}
             <div class="mt-3">
-                <button type="submit" class="btn btn-success w-100 shadow-sm">
-                    <i class="bi bi-file-earmark-pdf"></i> GENERAR PDF DE PEDIDO FINAL
+                <button type="submit" class="btn btn-lgi-gold w-100 fw-bold btn-lg shadow-sm">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>GENERAR PDF DE PEDIDO FINAL
                 </button>
             </div>
             {% endif %}
@@ -120,8 +106,8 @@
 </div>
 
 <div class="mt-3 text-center d-md-none">
-    <a href="{% url 'dashboard' %}" class="text-muted text-decoration-none small">
-        <i class="bi bi-arrow-left"></i> Volver al Dashboard
+    <a href="{% url 'dashboard' %}" style="color:var(--lgi-muted);text-decoration:none;font-size:0.85rem;">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Dashboard
     </a>
 </div>
 {% endblock %}

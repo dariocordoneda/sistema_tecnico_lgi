@@ -1,85 +1,156 @@
 {% extends 'gestion/base.html' %}
-
 {% block content %}
 <style>
-    /* Ajustes para Móvil */
-    @media (max-width: 768px) {
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 15px;
-        }
-        .btn-primary { width: 100%; padding: 12px; }
+    .user-card {
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        border: 1px solid #2a2a2a;
+    }
+    .uc-admin   { background: #1c0800; border-top: 3px solid var(--state-inact) !important; }
+    .uc-tecnico { background: #1a1a1a; border-top: 3px solid var(--state-dia)   !important; }
 
-        thead { display: none; }
-        table, tbody, tr, td { display: block; width: 100%; }
-        tr {
-            margin-bottom: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            padding: 10px;
-            background: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        td { text-align: left; border: none !important; padding: 5px 10px !important; }
-        td:nth-of-type(1) { font-size: 1.2rem; border-bottom: 1px solid #eee !important; margin-bottom: 5px; }
+    .uc-header {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+    .uc-left  { display: flex; align-items: center; gap: 10px; }
+    .uc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-        /* Etiquetas para no perder el contexto */
-        td:nth-of-type(2):before { content: "Email: "; fw-bold; color: #666; font-size: 0.8rem; }
-        td:nth-of-type(4):before { content: "Acceso: "; fw-bold; color: #666; font-size: 0.8rem; }
+    .uc-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .av-admin   { background: rgba(248,113,113,0.15); color: var(--state-inact); border: 1px solid rgba(248,113,113,0.25); }
+    .av-tecnico { background: rgba(96,165,250,0.12);  color: var(--state-dia);   border: 1px solid rgba(96,165,250,0.2);  }
 
-        .btn-outline-danger { width: 100%; padding: 10px; margin-top: 5px; }
+    .uc-nombre { font-size: 1rem; font-weight: 700; color: #fff; }
+
+    .badge-rol {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 10px; border-radius: 10px;
+        font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    }
+    .br-admin   { background: rgba(248,113,113,0.12); color: var(--state-inact); border: 1px solid rgba(248,113,113,0.25); }
+    .br-tecnico { background: rgba(96,165,250,0.10);  color: var(--state-dia);   border: 1px solid rgba(96,165,250,0.2);  }
+
+    .badge-vos {
+        background: rgba(212,160,23,0.15); color: var(--lgi-gold);
+        border: 1px solid rgba(212,160,23,0.3);
+        padding: 2px 8px; border-radius: 8px;
+        font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    }
+
+    .uc-body { padding: 10px 16px; }
+    .uc-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+        gap: 12px;
+    }
+    .uc-row:last-child { border-bottom: none; }
+    .uc-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #555; white-space: nowrap; }
+    .uc-val { font-size: 0.82rem; color: #ccc; text-align: right; }
+
+    .uc-footer { display: flex; border-top: 1px solid rgba(255,255,255,0.06); }
+    .uc-btn {
+        flex: 1; height: 42px; border: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; font-weight: 700; cursor: pointer;
+        gap: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+        text-decoration: none;
+    }
+    .btn-sesion { background: rgba(52,211,153,0.08); color: var(--state-lst); cursor: default; }
+    .btn-borrar { background: rgba(248,113,113,0.08); color: var(--state-inact); }
+    .btn-borrar:hover { background: rgba(248,113,113,0.15); color: var(--state-inact); }
+
+    .dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--state-lst); display: inline-block;
+    }
+
+    /* Desktop: grid 2 columnas */
+    @media (min-width: 768px) {
+        .users-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .user-card { margin-bottom: 0; }
+    }
+    @media (min-width: 1200px) {
+        .users-grid { grid-template-columns: repeat(3, 1fr); }
     }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold"><i class="bi bi-people"></i> Gestión de Personal</h2>
-    <a href="{% url 'crear_usuario' %}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-person-plus"></i> Registrar Nuevo Usuario
+    <h4 class="fw-bold mb-0" style="color:var(--lgi-text);">
+        <i class="bi bi-people me-2" style="color:var(--lgi-gold);"></i>Gestión de Personal
+    </h4>
+    <a href="{% url 'crear_usuario' %}" class="btn btn-lgi-gold btn-sm shadow-sm">
+        <i class="bi bi-person-plus me-1"></i> Registrar Nuevo Usuario
     </a>
 </div>
 
-<div class="card shadow-sm border-0 bg-transparent bg-md-white">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th class="ps-3">Usuario</th>
-                    <th>Email</th>
-                    <th>Nivel de Permiso</th>
-                    <th>Último Acceso</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %}
-                <tr>
-                    <td class="fw-bold ps-3 text-primary">{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>
+<div class="users-grid">
+    {% for u in usuarios %}
+    <div class="user-card {% if u.is_staff %}uc-admin{% else %}uc-tecnico{% endif %}">
+
+        <div class="uc-header">
+            <div class="uc-left" style="min-width:0;flex:1;">
+                <div class="uc-avatar {% if u.is_staff %}av-admin{% else %}av-tecnico{% endif %}">
+                    {{ u.username|slice:":2"|upper }}
+                </div>
+                <div style="min-width:0;">
+                    <div class="uc-nombre" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ u.username }}
+                    </div>
+                    <div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                         {% if u.is_staff %}
-                            <span class="badge bg-danger px-3">Administrador (Staff)</span>
+                            <span class="badge-rol br-admin">
+                                <i class="bi bi-shield-fill" style="font-size:9px;"></i> Administrador
+                            </span>
                         {% else %}
-                            <span class="badge bg-info text-dark px-3">Técnico</span>
+                            <span class="badge-rol br-tecnico">
+                                <i class="bi bi-wrench" style="font-size:9px;"></i> Técnico
+                            </span>
                         {% endif %}
-                    </td>
-                    <td class="text-muted">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
-                    <td class="text-center">
-                        {% if u.id != user.id %}
-                        <form action="{% url 'eliminar_usuario' u.id %}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este usuario?');" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="bi bi-trash"></i> Borrar
-                            </button>
-                        </form>
-                        {% else %}
-                            <span class="badge bg-light text-muted border px-3">Tú (Actual)</span>
+                        {% if u.id == user.id %}
+                            <span class="badge-vos">Vos</span>
                         {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="uc-body">
+            <div class="uc-row">
+                <span class="uc-lbl">Email</span>
+                <span class="uc-val">{{ u.email|default:"—" }}</span>
+            </div>
+            <div class="uc-row">
+                <span class="uc-lbl">Último acceso</span>
+                <span class="uc-val">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+            </div>
+        </div>
+
+        <div class="uc-footer">
+            {% if u.id == user.id %}
+                <div class="uc-btn btn-sesion">
+                    <span class="dot"></span> Sesión activa
+                </div>
+            {% else %}
+                <form action="{% url 'eliminar_usuario' u.id %}" method="POST"
+                      style="flex:1;display:flex;"
+                      onsubmit="return confirm('¿Borrar a {{ u.username }}? Esta acción no se puede deshacer.');">
+                    {% csrf_token %}
+                    <button type="submit" class="uc-btn btn-borrar">
+                        <i class="bi bi-trash"></i> Borrar usuario
+                    </button>
+                </form>
+            {% endif %}
+        </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}

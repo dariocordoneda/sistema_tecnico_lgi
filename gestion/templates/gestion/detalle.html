@@ -2,194 +2,301 @@
 
 {% block content %}
 <style>
-    /* Optimizaciones de diseño */
-    .card { border-radius: 12px; }
-    .info-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6c757d; display: block; margin-bottom: 2px; }
-    .data-value { font-weight: 600; color: #212529; }
-    .badge-estado { padding: 8px 12px; border-radius: 8px; font-weight: 700; }
+    .info-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--lgi-muted);
+        display: block;
+        margin-bottom: 3px;
+        letter-spacing: 0.5px;
+    }
 
-    /* Efecto hover en fotos */
-    .img-container { position: relative; border-radius: 10px; overflow: hidden; transition: transform 0.2s; cursor: pointer; }
+    .img-container {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.2s;
+        cursor: pointer;
+        border: 1px solid var(--lgi-border) !important;
+    }
     .img-container:hover { transform: scale(1.02); }
 
-    /* Totales destacados */
-    .bg-total { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 10px; padding: 15px; }
+    .bg-total {
+        background-color: #1f1f1f;
+        border: 1px solid var(--lgi-border);
+        border-radius: 10px;
+        padding: 14px;
+    }
+
+    .ficha-header {
+        background: var(--lgi-dark);
+        border: 1px solid var(--lgi-border) !important;
+        border-left: 4px solid var(--lgi-gold) !important;
+        border-radius: 10px;
+        padding: 14px 20px;
+    }
+
+    .falla-box {
+        background: #1a1200;
+        border: 1px solid #3a2e00;
+        border-left: 4px solid var(--state-ing);
+        border-radius: 8px;
+        padding: 14px;
+    }
+
+    .section-title {
+        color: var(--lgi-gold);
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--lgi-border);
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+    }
+
+    .input-readonly {
+        background: #1f1f1f !important;
+        border: 1px solid var(--lgi-border) !important;
+        color: var(--lgi-text) !important;
+        border-radius: 6px;
+    }
+    .input-edit {
+        background: #252525 !important;
+        border: 1px solid var(--lgi-gold) !important;
+        color: var(--lgi-text) !important;
+    }
 
     @media (max-width: 768px) {
-        .btn-sm-mobile { padding: 10px; width: 100%; margin-bottom: 10px; }
         .ficha-header { flex-direction: column; text-align: center; gap: 10px; }
     }
 </style>
 
-<div class="container mt-3 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm border-start border-4 border-primary ficha-header">
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center ficha-header">
         <div>
-            <h4 class="mb-0 fw-bold">Ficha: <span class="text-primary">{{ ficha.codigo_compuesto }}</span></h4>
-            <small class="text-muted"><i class="bi bi-calendar3"></i> Ingreso: {{ ficha.fecha_ingreso|date:"d/m/Y H:i" }}</small>
+            <h4 class="mb-0 fw-bold" style="color:var(--lgi-text);">
+                Ficha: <span style="color:var(--lgi-gold);">{{ ficha.codigo_compuesto }}</span>
+            </h4>
+            <small style="color:var(--lgi-muted);">
+                <i class="bi bi-calendar3"></i> Ingreso: {{ ficha.fecha_ingreso|date:"d/m/Y H:i" }}
+            </small>
         </div>
         <div class="d-flex gap-2">
-            <a href="{% url 'pdf_ingreso' ficha.id %}" target="_blank" class="btn btn-danger shadow-sm">
-                <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-md-inline">Imprimir</span>
+            <a href="{% url 'pdf_ingreso' ficha.id %}" target="_blank"
+               class="btn btn-sm"
+               style="background:#2a0a0a;border:1px solid #5c1a1a;color:#ff6b6b;">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span class="d-none d-md-inline"> Imprimir</span>
             </a>
-        </div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-md-4">
-            <form method="POST" action="{% url 'editar_datos_recepcion' ficha.id %}" id="formRecepcion">
-                {% csrf_token %}
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-                        <span class="fw-bold"><i class="bi bi-person-badge"></i> Datos de Recepción</span>
-                        <button type="button" class="btn btn-sm btn-outline-light" onclick="habilitarEdicionGral()" id="btnEditarGral">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    </div>
-                    <div class="card-body" id="contenedorInputs">
-                        <div class="mb-4">
-                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-1"><i class="bi bi-person"></i> CLIENTE</h6>
-                            <div class="mb-2">
-                                <span class="info-label">Nombre y Apellido</span>
-                                <input type="text" name="nombre_apellido" class="form-control form-control-sm border-0 bg-light fw-bold" value="{{ ficha.equipo.cliente.nombre_apellido }}" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <span class="info-label">WhatsApp / Tel</span>
-                                <input type="text" name="telefono" class="form-control form-control-sm border-0 bg-light" value="{{ ficha.equipo.cliente.telefono }}" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <span class="info-label">Email</span>
-                                <input type="email" name="email" class="form-control form-control-sm border-0 bg-light" value="{{ ficha.equipo.cliente.email }}" readonly>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-1"><i class="bi bi-phone"></i> EQUIPO</h6>
-                            <div class="mb-2">
-                                <span class="info-label">Modelo</span>
-                                <input type="text" name="marca_modelo" class="form-control form-control-sm border-0 bg-light" value="{{ ficha.equipo.marca_modelo }}" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <span class="info-label">Serie / IMEI</span>
-                                <input type="text" name="identificador" class="form-control form-control-sm border-0 bg-light" value="{{ ficha.equipo.identificador }}" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <span class="info-label">Clave / Patrón</span>
-                                <input type="text" name="password" class="form-control form-control-sm border-0 bg-light fw-bold text-danger" value="{{ ficha.equipo.password }}" readonly>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btnGuardarGral" class="btn btn-success btn-sm w-100 d-none mt-3 shadow">
-                            <i class="bi bi-check-lg"></i> GUARDAR CAMBIOS
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <div class="col-md-8">
-            <form method="POST" action="{% url 'actualizar_ficha' ficha.id %}" class="card shadow-sm border-0 mb-4">
-                {% csrf_token %}
-                <div class="card-body p-4">
-                    <div class="bg-warning bg-opacity-10 p-3 rounded-3 mb-4 border-start border-4 border-warning">
-                        <span class="info-label text-warning-emphasis text-uppercase">Problema a solucionar</span>
-                        <p class="mb-0 fw-bold text-dark fs-5">{{ ficha.falla_cliente }}</p>
-                        {% if ficha.obs_recepcion %}
-                            <hr class="my-2">
-                            <small class="text-muted"><strong>Estética:</strong> {{ ficha.obs_recepcion }}</small>
-                        {% endif %}
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-dark"><i class="bi bi-activity"></i> Estado del Trabajo</label>
-                            <select name="estado" class="form-select form-select-lg border-primary shadow-sm fw-bold">
-                                {% for codigo, nombre in ficha.ESTADOS %}
-                                    <option value="{{ codigo }}" {% if ficha.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-primary"><i class="bi bi-box-seam"></i> Repuesto Utilizado</label>
-                            <select name="repuesto_seleccionado" class="form-select form-select-lg border-primary shadow-sm bg-light" onchange="actualizarPrecioSugerido(this)">
-                                <option value="">-- Sin repuesto de stock --</option>
-                                {% for r in repuestos_disponibles %}
-                                    <option value="{{ r.id }}"
-                                            data-precio="{{ r.precio_venta_sugerido|stringformat:'d' }}"
-                                            {% if ficha.repuesto_stock.id == r.id %}selected{% endif %}>
-                                        {{ r.nombre }} (Q: {{ r.cantidad }})
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6 mb-3">
-                            <div class="bg-total shadow-sm">
-                                <label class="info-label">Costo Repuesto ($)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text border-0 bg-transparent text-muted fs-4">$</span>
-                                    <input type="number" id="input_costo_repuesto" name="costo_repuesto" class="form-control form-control-lg border-0 bg-transparent fw-bold text-info fs-3 p-0" value="{{ ficha.costo_repuesto|stringformat:'d' }}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="bg-total shadow-sm">
-                                <label class="info-label">Mano de Obra ($)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text border-0 bg-transparent text-muted fs-4">$</span>
-                                    <input type="number" name="costo_mo" class="form-control form-control-lg border-0 bg-transparent fw-bold text-success fs-3 p-0" value="{{ ficha.costo_mo|stringformat:'d' }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 mb-4">
-                        <label class="form-label fw-bold"><i class="bi bi-journal-text"></i> Diagnóstico Técnico / Resumen</label>
-                        <textarea name="resumen_trabajo" class="form-control border-2 shadow-sm p-3" rows="4" placeholder="¿Qué se le hizo al equipo?">{{ ficha.resumen_trabajo }}</textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 shadow btn-lg py-3 fw-bold">
-                        <i class="bi bi-save-fill"></i> ACTUALIZAR FICHA DE TRABAJO
-                    </button>
-                </div>
-            </form>
-
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-images text-primary"></i> Evidencia Fotográfica</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        {% for foto in ficha.fotos.all %}
-                        <div class="col-6 col-md-4">
-                            <div class="img-container shadow-sm border">
-                                <a href="{{ foto.imagen.url }}" target="_blank">
-                                    <img src="{{ foto.imagen.url }}" class="img-fluid" style="height: 150px; width: 100%; object-fit: cover;" alt="Foto Recepción">
-                                </a>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12 text-center py-4">
-                            <i class="bi bi-camera-video-off fs-1 text-muted"></i>
-                            <p class="text-muted mt-2">Sin registro fotográfico.</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            {% if user.is_staff %}
-            <div class="mt-4 text-center">
-                <a href="{% url 'eliminar_ficha' ficha.id %}"
-                   onclick="return confirm('¿BORRAR ESTA FICHA? ')"
-                   class="btn btn-sm btn-outline-danger border-0">
-                   <i class="bi bi-trash"></i> Eliminar Ficha
-                </a>
-            </div>
+            {% if ficha.equipo.cliente.email %}
+            <a href="{% url 'reenviar_email_ingreso' ficha.id %}"
+               onclick="return confirm('¿Reenviar email de ingreso a {{ ficha.equipo.cliente.email }}?')"
+               class="btn btn-sm"
+               style="background:#001428;border:1px solid #002244;color:var(--state-dia);">
+                <i class="bi bi-envelope-arrow-up"></i>
+                <span class="d-none d-md-inline"> Reenviar Email</span>
+            </a>
             {% endif %}
         </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-5">
+
+    <div class="col-md-4">
+        <form method="POST" action="{% url 'editar_datos_recepcion' ficha.id %}" id="formRecepcion">
+            {% csrf_token %}
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center py-3"
+                     style="background:var(--lgi-gold);border-bottom:none;border-radius:9px 9px 0 0;">
+                    <span class="fw-bold" style="color:var(--lgi-black);font-size:0.85rem;letter-spacing:0.5px;">
+                        <i class="bi bi-person-badge me-1"></i> DATOS DE RECEPCIÓN
+                    </span>
+                    <button type="button" class="btn btn-sm"
+                            style="background:var(--lgi-black);color:var(--lgi-gold);border:none;border-radius:6px;"
+                            onclick="habilitarEdicionGral()" id="btnEditarGral">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+                <div class="card-body" id="contenedorInputs">
+                    <div class="mb-4">
+                        <div class="section-title"><i class="bi bi-person me-1"></i>Cliente</div>
+                        <div class="mb-2">
+                            <span class="info-label">Nombre y Apellido</span>
+                            <input type="text" name="nombre_apellido"
+                                   class="form-control form-control-sm input-readonly"
+                                   value="{{ ficha.equipo.cliente.nombre_apellido }}" readonly>
+                        </div>
+                        <div class="mb-2">
+                            <span class="info-label">WhatsApp / Tel</span>
+                            <input type="text" name="telefono"
+                                   class="form-control form-control-sm input-readonly"
+                                   value="{{ ficha.equipo.cliente.telefono }}" readonly>
+                        </div>
+                        <div class="mb-2">
+                            <span class="info-label">Email</span>
+                            <input type="email" name="email"
+                                   class="form-control form-control-sm input-readonly"
+                                   value="{{ ficha.equipo.cliente.email }}" readonly>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title"><i class="bi bi-phone me-1"></i>Equipo</div>
+                        <div class="mb-2">
+                            <span class="info-label">Modelo</span>
+                            <input type="text" name="marca_modelo"
+                                   class="form-control form-control-sm input-readonly"
+                                   value="{{ ficha.equipo.marca_modelo }}" readonly>
+                        </div>
+                        <div class="mb-2">
+                            <span class="info-label">Serie / IMEI</span>
+                            <input type="text" name="identificador"
+                                   class="form-control form-control-sm input-readonly"
+                                   value="{{ ficha.equipo.identificador }}" readonly>
+                        </div>
+                        <div class="mb-2">
+                            <span class="info-label">Clave / Patrón</span>
+                            <input type="text" name="password"
+                                   class="form-control form-control-sm input-readonly fw-bold"
+                                   style="color:var(--state-inact) !important;"
+                                   value="{{ ficha.equipo.password }}" readonly>
+                        </div>
+                    </div>
+                    <button type="submit" id="btnGuardarGral"
+                            class="btn btn-lgi-gold btn-sm w-100 d-none mt-3">
+                        <i class="bi bi-check-lg"></i> GUARDAR CAMBIOS
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-8">
+        <form method="POST" action="{% url 'actualizar_ficha' ficha.id %}" class="card mb-4">
+            {% csrf_token %}
+            <div class="card-body p-4">
+
+                <div class="falla-box mb-4">
+                    <span class="info-label" style="color:var(--state-ing);">Problema a solucionar</span>
+                    <p class="mb-0 fw-bold fs-5" style="color:var(--lgi-text);">{{ ficha.falla_cliente }}</p>
+                    {% if ficha.obs_recepcion %}
+                        <hr style="border-color:var(--lgi-border);margin:8px 0;">
+                        <small style="color:var(--lgi-muted);"><strong>Estética:</strong> {{ ficha.obs_recepcion }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label info-label">
+                            <i class="bi bi-activity me-1"></i> Estado del Trabajo
+                        </label>
+                        <select name="estado" class="form-select form-select-lg fw-bold"
+                                style="border-color:var(--lgi-gold);">
+                            {% for codigo, nombre in ficha.ESTADOS %}
+                                <option value="{{ codigo }}" {% if ficha.estado == codigo %}selected{% endif %}>
+                                    {{ nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label info-label">
+                            <i class="bi bi-box-seam me-1"></i> Repuesto Utilizado
+                        </label>
+                        <select name="repuesto_seleccionado" class="form-select form-select-lg"
+                                onchange="actualizarPrecioSugerido(this)">
+                            <option value="">-- Sin repuesto de stock --</option>
+                            {% for r in repuestos_disponibles %}
+                                <option value="{{ r.id }}"
+                                        data-precio="{{ r.precio_venta_sugerido|stringformat:'d' }}"
+                                        {% if ficha.repuesto_stock.id == r.id %}selected{% endif %}>
+                                    {{ r.nombre }} (Q: {{ r.cantidad }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="bg-total">
+                            <span class="info-label">Costo Repuesto ($)</span>
+                            <div class="input-group">
+                                <span class="input-group-text border-0 bg-transparent fs-4"
+                                      style="color:var(--lgi-muted);">$</span>
+                                <input type="number" id="input_costo_repuesto" name="costo_repuesto"
+                                       class="form-control form-control-lg border-0 bg-transparent fw-bold fs-3 p-0"
+                                       style="color:var(--state-dia);"
+                                       value="{{ ficha.costo_repuesto|stringformat:'d' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="bg-total">
+                            <span class="info-label">Mano de Obra ($)</span>
+                            <div class="input-group">
+                                <span class="input-group-text border-0 bg-transparent fs-4"
+                                      style="color:var(--lgi-muted);">$</span>
+                                <input type="number" name="costo_mo"
+                                       class="form-control form-control-lg border-0 bg-transparent fw-bold fs-3 p-0"
+                                       style="color:var(--state-lst);"
+                                       value="{{ ficha.costo_mo|stringformat:'d' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label info-label">
+                        <i class="bi bi-journal-text me-1"></i> Diagnóstico Técnico / Resumen
+                    </label>
+                    <textarea name="resumen_trabajo" class="form-control p-3" rows="4"
+                              placeholder="¿Qué se le hizo al equipo?">{{ ficha.resumen_trabajo }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-lgi-gold w-100 btn-lg fw-bold py-3">
+                    <i class="bi bi-save-fill me-2"></i> ACTUALIZAR FICHA DE TRABAJO
+                </button>
+            </div>
+        </form>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center py-3">
+                <i class="bi bi-images me-2" style="color:var(--lgi-gold);"></i>
+                <h5 class="mb-0 fw-bold" style="color:var(--lgi-text);">Evidencia Fotográfica</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% for foto in ficha.fotos.all %}
+                    <div class="col-6 col-md-4">
+                        <div class="img-container">
+                            <a href="{{ foto.imagen.url }}" target="_blank">
+                                <img src="{{ foto.imagen.url }}" class="img-fluid"
+                                     style="height:150px;width:100%;object-fit:cover;" alt="Foto Recepción">
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-camera-video-off fs-1" style="color:var(--lgi-muted);"></i>
+                        <p style="color:var(--lgi-muted);" class="mt-2">Sin registro fotográfico.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_staff %}
+        <div class="mt-4 text-center">
+            <a href="{% url 'eliminar_ficha' ficha.id %}"
+               onclick="return confirm('¿BORRAR ESTA FICHA?')"
+               class="btn btn-sm"
+               style="color:var(--state-inact);border:1px solid #3a1a1a;background:transparent;">
+                <i class="bi bi-trash me-1"></i> Eliminar Ficha
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -198,12 +305,12 @@ function habilitarEdicionGral() {
     const contenedor = document.getElementById('contenedorInputs');
     const inputs = contenedor.querySelectorAll('input');
     const btnGuardar = document.getElementById('btnGuardarGral');
-    const btnEditar = document.getElementById('btnEditarGral');
+    const btnEditar  = document.getElementById('btnEditarGral');
 
     inputs.forEach(input => {
         input.removeAttribute('readonly');
-        input.classList.remove('border-0', 'bg-light');
-        input.classList.add('border', 'bg-white', 'p-2');
+        input.classList.remove('input-readonly');
+        input.classList.add('input-edit');
     });
 
     btnGuardar.classList.remove('d-none');
@@ -211,16 +318,14 @@ function habilitarEdicionGral() {
 }
 
 function actualizarPrecioSugerido(selectElement) {
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const precio = selectedOption.getAttribute('data-precio');
+    const precio = selectElement.options[selectElement.selectedIndex].getAttribute('data-precio');
     const inputCosto = document.getElementById('input_costo_repuesto');
-
     if (precio) {
         inputCosto.value = precio;
-        // Efecto visual para notar el cambio
-        inputCosto.closest('.bg-total').style.transition = '0.3s';
-        inputCosto.closest('.bg-total').style.backgroundColor = '#e7f5ff';
-        setTimeout(() => { inputCosto.closest('.bg-total').style.backgroundColor = '#f8f9fa'; }, 600);
+        const box = inputCosto.closest('.bg-total');
+        box.style.transition = '0.3s';
+        box.style.borderColor = 'var(--lgi-gold)';
+        setTimeout(() => { box.style.borderColor = 'var(--lgi-border)'; }, 800);
     }
 }
 </script>

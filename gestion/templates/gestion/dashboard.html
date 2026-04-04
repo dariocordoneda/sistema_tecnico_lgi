@@ -2,210 +2,252 @@
 
 {% block content %}
 <style>
-    /* 1. ESTILOS ORIGINALES MANTENIDOS */
-    .btn-filter {
-        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    .btn-filter { transition: transform 0.2s; cursor: pointer; }
+    .btn-filter:hover { transform: translateY(-3px); }
+
+    .stat-card {
+        background-color: var(--lgi-dark);
+        border: 1px solid var(--lgi-border) !important;
+        border-radius: 10px;
+        text-align: center;
+        padding: 14px 8px;
         cursor: pointer;
-        border: none !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        transition: border-color 0.2s, transform 0.2s;
     }
-    .btn-filter:hover { transform: translateY(-5px); }
-    .card { border-radius: 12px; }
-    .bg-tech-dark { background-color: #0f172a !important; color: white; }
-    .bg-tech-blue { background-color: #3b82f6 !important; color: white; }
-    .bg-tech-emerald { background-color: #10b981 !important; color: white; }
-    .table thead { background-color: #0f172a; color: white; }
-    .text-primary-custom { color: #3b82f6 !important; }
+    .stat-card:hover { border-color: var(--lgi-gold) !important; transform: translateY(-3px); }
+    .stat-card .stat-num { font-size: 1.7rem; font-weight: 700; line-height: 1; }
+    .stat-card .stat-lbl { font-size: 0.65rem; color: var(--lgi-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-    /* 2. DISEÑO PARA MÓVIL VERTICAL (iPhone / iPad Vertical) */
-    @media (max-width: 767px) {
-        .row.filtros-superior {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px !important;
-        }
-        .filtros-superior .col-6 { width: 100% !important; padding: 0 !important; }
+    .search-wrap {
+        background: var(--lgi-dark);
+        border: 1px solid var(--lgi-border);
+        border-radius: 8px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .search-wrap .form-control { border: none; background: transparent; color: var(--lgi-text); padding: 0; }
+    .search-wrap .form-control:focus { box-shadow: none; }
 
-        thead { display: none; }
-        table, tbody, tr, td { display: block; width: 100%; }
-
-        tr {
-            margin-bottom: 20px;
-            border: 1px solid #dee2e6;
-            border-radius: 15px;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        td { border: none !important; padding: 5px 0 !important; }
-
-        .acciones-container {
-            display: flex !important;
-            justify-content: center !important;
-            gap: 30px !important;
-            padding-top: 15px;
-            margin-top: 15px;
-            border-top: 1px dashed #eee;
-        }
-
-        .btn-accion-movil {
-            width: 60px !important;
-            height: 60px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border-radius: 15px !important;
-            font-size: 1.6rem !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .badge-desktop { display: none; }
+    /* ── FICHA CARD ── */
+    .ficha-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+        margin-bottom: 10px;
     }
 
-    /* 3. DISEÑO PARA MAC, PC Y MÓVIL HORIZONTAL */
+    /* Fondo teñido + borde superior según estado */
+    .fc-ing  { background: #1c1600; border-top: 3px solid var(--state-ing)   !important; }
+    .fc-dia  { background: #001830; border-top: 3px solid var(--state-dia)   !important; }
+    .fc-rep  { background: #1c0e00; border-top: 3px solid var(--state-rep)   !important; }
+    .fc-lst  { background: #001a0c; border-top: 3px solid var(--state-lst)   !important; }
+    .fc-inact{ background: #1a0000; border-top: 3px solid var(--state-inact) !important; }
+    .fc-ent  { background: #161616; border-top: 3px solid #3a3a3a            !important; }
+
+    .fc-header {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .fc-left  { flex: 1; min-width: 0; }
+    .fc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+    .fc-codigo  { font-family: monospace; font-size: 0.68rem; color: #777; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .fc-nombre  { font-size: 1.05rem; font-weight: 700; color: #ffffff; display: block; margin-bottom: 3px; }
+    .fc-tel     { font-size: 0.8rem; color: var(--state-dia); display: block; }
+    .fc-equipo  { font-size: 0.82rem; font-weight: 600; color: #d0d0d0; text-align: right; }
+    .fc-imei    { font-size: 0.66rem; color: #555; font-family: monospace; text-align: right; }
+
+    .fc-body { padding: 10px 16px; }
+    .fc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        gap: 12px;
+    }
+    .fc-row:last-child { border-bottom: none; }
+    .fc-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #555; white-space: nowrap; }
+    .fc-val { font-size: 0.85rem; font-weight: 600; color: #cccccc; text-align: right; }
+
+    /* Badges */
+    .badge-fc { display: inline-block; padding: 3px 9px; border-radius: 10px; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .bfc-ing  { background: rgba(201,150,26,0.15);  color: var(--state-ing);   border: 1px solid rgba(201,150,26,0.3);  }
+    .bfc-dia  { background: rgba(96,165,250,0.12);  color: var(--state-dia);   border: 1px solid rgba(96,165,250,0.25); }
+    .bfc-rep  { background: rgba(251,146,60,0.12);  color: var(--state-rep);   border: 1px solid rgba(251,146,60,0.25); }
+    .bfc-lst  { background: var(--lgi-gold); color: var(--lgi-black); border: none; }
+    .bfc-inact{ background: rgba(248,113,113,0.12); color: var(--state-inact); border: 1px solid rgba(248,113,113,0.25);}
+    .bfc-ent  { background: rgba(255,255,255,0.06); color: #888; border: 1px solid #333; }
+
+    /* Botones de acción */
+    .fc-footer { display: flex; border-top: 1px solid rgba(255,255,255,0.06); }
+    .fc-btn {
+        flex: 1; height: 46px; border: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.15rem; cursor: pointer; text-decoration: none;
+        border-right: 1px solid rgba(255,255,255,0.06);
+        transition: opacity 0.15s;
+    }
+    .fc-btn:last-child { border-right: none; }
+    .fc-btn:hover { opacity: 0.8; }
+    .btn-wa-fc   { background: rgba(37,211,102,0.08); color: #25D366; }
+    .btn-pdf-fc  { background: rgba(255,107,107,0.08); color: #ff6b6b; }
+    .btn-edit-fc { background: var(--lgi-gold); color: var(--lgi-black); }
+
+    /* Desktop: grid de 2 columnas cuando hay espacio */
     @media (min-width: 768px) {
-        .acciones-container {
-            display: inline-flex;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
-        .btn-accion-movil {
-            padding: 8px 15px;
-            font-size: 1rem !important;
-        }
-        .table { width: 100% !important; table-layout: auto; }
-        .badge-desktop { display: inline-block; }
+        .ficha-card { margin-bottom: 0; }
+    }
+    @media (min-width: 1200px) {
+        .cards-grid { grid-template-columns: repeat(3, 1fr); }
     }
 </style>
 
-<div class="row mb-4 g-3 filtros-superior">
+<!-- STATS -->
+<div class="row mb-4 g-2">
     {% if user.is_staff %}
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="{% url 'dashboard' %}" class="text-decoration-none">
-            <div class="card bg-tech-dark text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.total }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Global</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--lgi-text);">{{ stats.total }}</div>
+                <div class="stat-lbl">Global</div>
             </div>
         </a>
     </div>
     {% endif %}
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="?estado=ING" class="text-decoration-none">
-            <div class="card bg-warning text-dark text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.ingresados }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Ingresos</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--state-ing);">{{ stats.ingresados }}</div>
+                <div class="stat-lbl">Ingresos</div>
             </div>
         </a>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="?estado=DIA" class="text-decoration-none">
-            <div class="card bg-info text-white text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.diagnostico }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Diag.</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--state-dia);">{{ stats.diagnostico }}</div>
+                <div class="stat-lbl">Diag.</div>
             </div>
         </a>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="?estado=REP" class="text-decoration-none">
-            <div class="card bg-tech-blue text-white text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.reparando }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Taller</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--state-rep);">{{ stats.reparando }}</div>
+                <div class="stat-lbl">Taller</div>
             </div>
         </a>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="?estado=LST" class="text-decoration-none">
-            <div class="card bg-tech-emerald text-white text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.listos }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Listos</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--state-lst);">{{ stats.listos }}</div>
+                <div class="stat-lbl">Listos</div>
             </div>
         </a>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-4 col-md-2">
         <a href="?estado=ABD" class="text-decoration-none">
-            <div class="card bg-danger text-white text-center p-3 shadow-sm h-100 btn-filter">
-                <h3 class="mb-0 fw-bold">{{ stats.abandonados }}</h3>
-                <small class="text-uppercase" style="font-size: 0.65rem;">Inact.</small>
+            <div class="stat-card btn-filter">
+                <div class="stat-num" style="color:var(--state-inact);">{{ stats.abandonados }}</div>
+                <div class="stat-lbl">Inact.</div>
             </div>
         </a>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-12">
-        <form method="GET" class="d-flex shadow-sm bg-white p-2 rounded-pill px-3">
-            <i class="bi bi-search align-self-center text-muted me-2"></i>
-            <input class="form-control border-0 bg-transparent" type="search" name="buscar" value="{{ request.GET.buscar }}" placeholder="Buscar cliente, equipo o código...">
-            <button class="btn bg-tech-dark text-white rounded-pill px-4" type="submit">Ir</button>
-        </form>
-    </div>
+<!-- BUSCADOR -->
+<div class="mb-4">
+    <form method="GET">
+        <div class="search-wrap">
+            <i class="bi bi-search" style="color:var(--lgi-muted);"></i>
+            <input class="form-control" type="search" name="buscar"
+                   value="{{ request.GET.buscar }}"
+                   placeholder="Buscar cliente, equipo o código...">
+            <button class="btn btn-lgi-gold btn-sm px-4 rounded-pill" type="submit">Buscar</button>
+        </div>
+    </form>
 </div>
 
-<div class="card shadow-sm border-0 bg-transparent bg-md-white">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-tech-dark text-white">
-                <tr>
-                    <th class="ps-4">Ficha</th>
-                    <th>Cliente</th>
-                    <th>Equipo</th>
-                    <th>Estado</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ficha in fichas %}
-                <tr>
-                    <td class="ps-md-4 fw-bold text-primary-custom">#{{ ficha.codigo_compuesto }}</td>
-                    <td>
-                        <div class="fw-bold fs-5 fs-md-6">{{ ficha.equipo.cliente.nombre_apellido }}</div>
-                        <small class="text-muted"><i class="bi bi-telephone"></i> {{ ficha.equipo.cliente.telefono }}</small>
-                    </td>
-                    <td>
-                        <div class="text-dark fw-bold">{{ ficha.equipo.marca_modelo }}</div>
-                        <code class="text-muted small">{{ ficha.equipo.identificador }}</code>
-                    </td>
-                    <td>
-                        {% if ficha.estado == 'ING' %}<span class="badge bg-warning text-dark px-3">Ingresado</span>
-                        {% elif ficha.estado == 'DIA' %}<span class="badge bg-info px-3">Diagnóstico</span>
-                        {% elif ficha.estado == 'REP' %}<span class="badge bg-tech-blue px-3">En Taller</span>
-                        {% elif ficha.estado == 'LST' %}<span class="badge bg-tech-emerald px-3">¡Listo!</span>
-                        {% elif ficha.estado == 'ABD' %}<span class="badge bg-danger px-3">Inactivo</span>
-                        {% elif ficha.estado == 'ENT' %}<span class="badge bg-dark px-3 text-white">Entregado</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        <div class="acciones-container">
-                            <button onclick="enviarWhatsApp('{{ ficha.equipo.cliente.telefono }}', 'Hola {{ ficha.equipo.cliente.nombre_apellido }}...')"
-                                    class="btn btn-success btn-accion-movil" title="WhatsApp">
-                                <i class="bi bi-whatsapp"></i>
-                            </button>
-                            <a href="{% url 'pdf_ingreso' ficha.id %}" target="_blank" class="btn btn-light border btn-accion-movil" title="Ver PDF">
-                                <i class="bi bi-file-earmark-pdf text-danger"></i>
-                            </a>
-                            <a href="{% url 'detalle_ficha' ficha.id %}" class="btn btn-tech-blue text-white btn-accion-movil" title="Editar" style="background-color: #3b82f6;">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- CARDS — una sola estructura para todos los tamaños -->
+<div class="cards-grid">
+    {% for ficha in fichas %}
+    <div class="ficha-card
+        {% if ficha.estado == 'ING' %}fc-ing
+        {% elif ficha.estado == 'DIA' %}fc-dia
+        {% elif ficha.estado == 'REP' %}fc-rep
+        {% elif ficha.estado == 'LST' %}fc-lst
+        {% elif ficha.estado == 'ABD' %}fc-inact
+        {% else %}fc-ent{% endif %}">
+
+        <div class="fc-header">
+            <div class="fc-left">
+                <span class="fc-codigo">#{{ ficha.codigo_compuesto }}</span>
+                <span class="fc-nombre">{{ ficha.equipo.cliente.nombre_apellido }}</span>
+                <span class="fc-tel"><i class="bi bi-telephone"></i> {{ ficha.equipo.cliente.telefono }}</span>
+            </div>
+            <div class="fc-right">
+                {% if ficha.estado == 'ING' %}<span class="badge-fc bfc-ing">Ingresado</span>
+                {% elif ficha.estado == 'DIA' %}<span class="badge-fc bfc-dia">Diagnóstico</span>
+                {% elif ficha.estado == 'REP' %}<span class="badge-fc bfc-rep">En Taller</span>
+                {% elif ficha.estado == 'LST' %}<span class="badge-fc bfc-lst">&#10003; Listo</span>
+                {% elif ficha.estado == 'ABD' %}<span class="badge-fc bfc-inact">Inactivo</span>
+                {% else %}<span class="badge-fc bfc-ent">Entregado</span>{% endif %}
+                <span class="fc-equipo">{{ ficha.equipo.marca_modelo }}</span>
+                <span class="fc-imei">{{ ficha.equipo.identificador }}</span>
+            </div>
+        </div>
+
+        <div class="fc-body">
+            <div class="fc-row">
+                <span class="fc-lbl">Falla</span>
+                <span class="fc-val">{{ ficha.falla_cliente }}</span>
+            </div>
+        </div>
+
+        <div class="fc-footer">
+            <button onclick="enviarWhatsApp('{{ ficha.equipo.cliente.telefono }}', 'Hola {{ ficha.equipo.cliente.nombre_apellido }}, te contactamos desde LGI Electrónics.')"
+                    class="fc-btn btn-wa-fc" title="WhatsApp">
+                <i class="bi bi-whatsapp"></i>
+            </button>
+            <a href="{% url 'pdf_ingreso' ficha.id %}" target="_blank"
+               class="fc-btn btn-pdf-fc" title="Ver PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+            <a href="{% url 'detalle_ficha' ficha.id %}"
+               class="fc-btn btn-edit-fc" title="Ver detalle">
+                <i class="bi bi-pencil-square"></i>
+            </a>
+        </div>
     </div>
+    {% empty %}
+    <div class="col-12 text-center py-5" style="color:var(--lgi-muted);">
+        <i class="bi bi-inbox fs-1 d-block mb-2" style="opacity:0.3;"></i>
+        No hay fichas registradas.
+    </div>
+    {% endfor %}
 </div>
 
 <script>
-    function enviarWhatsApp(telefono, mensaje) {
-        let limpio = telefono.replace(/\D/g, '');
-        if (limpio.length === 10) limpio = "549" + limpio;
-        let url = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-            ? "https://api.whatsapp.com/send?phone=" + limpio + "&text=" + encodeURIComponent(mensaje)
-            : "https://web.whatsapp.com/send?phone=" + limpio + "&text=" + encodeURIComponent(mensaje);
-        window.open(url, '_blank');
-    }
+function enviarWhatsApp(telefono, mensaje) {
+    let limpio = telefono.replace(/\D/g, '');
+    if (limpio.length === 10) limpio = "549" + limpio;
+    let url = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? "https://api.whatsapp.com/send?phone=" + limpio + "&text=" + encodeURIComponent(mensaje)
+        : "https://web.whatsapp.com/send?phone=" + limpio + "&text=" + encodeURIComponent(mensaje);
+    window.open(url, '_blank');
+}
 </script>
 {% endblock %}

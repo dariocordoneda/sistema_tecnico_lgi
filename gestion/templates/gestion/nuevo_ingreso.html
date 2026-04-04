@@ -1,228 +1,280 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <title>Nuevo Ingreso - SAT</title>
-    <style>
-        /* AJUSTES PARA MOVIL */
-        @media (max-width: 768px) {
-            .container { padding-top: 10px !important; }
-            h2 { font-size: 1.4rem; }
-            .col-md-4 { order: 2; margin-top: 20px; }
-            .col-md-8 { order: 1; }
-            .form-control, .form-control-lg { font-size: 16px !important; padding: 12px; }
-            .btn-lg { padding: 15px; font-size: 1.1rem; font-weight: bold; }
-            #listaClientes { max-height: 200px !important; }
-        }
-        .border-primary-custom { border: 2px solid #0d6efd !important; }
-        .info-fotos { font-size: 0.85rem; color: #666; background: #eef2ff; padding: 10px; border-radius: 8px; border-left: 4px solid #0d6efd; }
+{% extends 'gestion/base.html' %}
 
-        /* Miniaturas de las fotos que vas sacando */
-        .preview-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd; }
-        .preview-badge { font-size: 0.7rem; background: #28a745; color: white; padding: 2px 8px; border-radius: 10px; }
+{% block content %}
+<style>
+    .preview-thumb {
+        width: 60px; height: 60px;
+        object-fit: cover; border-radius: 6px;
+        border: 1px solid var(--lgi-border);
+    }
 
-        /* Overlay de carga para feedback visual */
-        #overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 1000; flex-direction: column; align-items: center; justify-content: center;
-        }
-    </style>
-</head>
-<body class="bg-light">
-    <div id="overlay">
-        <div class="spinner-border text-primary mb-2"></div>
-        <p class="fw-bold text-primary">Subiendo ficha...</p>
-    </div>
+    .info-fotos {
+        font-size: 0.82rem;
+        color: var(--lgi-muted);
+        background: #1a1a00;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border-left: 4px solid var(--lgi-gold);
+        margin-top: 8px;
+    }
 
-    <div class="container py-3 py-md-4">
-        <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
-            <h2 class="mb-0 fw-bold"><i class="bi bi-plus-circle text-primary"></i> Recepción</h2>
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
-        </div>
+    .list-group-item-action {
+        background: var(--lgi-dark);
+        border-color: var(--lgi-border) !important;
+        color: var(--lgi-text);
+    }
+    .list-group-item-action:hover {
+        background: #1f1a00;
+        color: var(--lgi-gold);
+    }
 
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-dark text-white">¿Cliente Existente?</div>
-                    <div class="card-body">
-                        <div class="input-group mb-2">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" id="buscadorCliente" class="form-control border-start-0" placeholder="Nombre o DNI...">
-                        </div>
-                        <div class="list-group list-group-flush border rounded" id="listaClientes" style="max-height: 300px; overflow-y: auto;">
-                            {% for c in clientes %}
-                            <a href="?cliente_id={{ c.id }}" class="list-group-item list-group-item-action py-3">
-                                <div class="fw-bold">{{ c.nombre_apellido }}</div>
-                                <small class="text-muted">DNI: {{ c.dni }} | Tel: {{ c.telefono }}</small>
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </div>
+    .section-divider {
+        border-color: var(--lgi-border);
+        margin: 20px 0;
+    }
+
+    #overlay {
+        display: none; position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 1000;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    #overlay p { color: var(--lgi-gold); font-weight: 700; letter-spacing: 1px; margin: 0; }
+
+    @media (max-width: 768px) {
+        .col-md-4 { order: 2; margin-top: 16px; }
+        .col-md-8 { order: 1; }
+        .form-control, .form-control-lg { font-size: 16px !important; padding: 12px; }
+        #listaClientes { max-height: 180px !important; }
+    }
+</style>
+
+<!-- OVERLAY DE CARGA -->
+<div id="overlay">
+    <div class="spinner-border mb-2" style="color:var(--lgi-gold);"></div>
+    <p>Subiendo ficha...</p>
+</div>
+
+<!-- ENCABEZADO -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--lgi-text);">
+        <i class="bi bi-plus-circle me-2" style="color:var(--lgi-gold);"></i>Recepción
+    </h4>
+    <a href="{% url 'dashboard' %}" class="btn btn-sm"
+       style="background:var(--lgi-dark);border:1px solid var(--lgi-border);color:var(--lgi-muted);">
+        <i class="bi bi-arrow-left me-1"></i> Cancelar
+    </a>
+</div>
+
+<div class="row">
+
+    <!-- BUSCADOR CLIENTES -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header fw-bold py-3"
+                 style="background:var(--lgi-gold);color:var(--lgi-black);border-radius:9px 9px 0 0;font-size:0.85rem;letter-spacing:0.5px;">
+                <i class="bi bi-person-check me-2"></i>¿CLIENTE EXISTENTE?
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-2">
+                    <span class="input-group-text"
+                          style="background:var(--lgi-dark);border:1px solid var(--lgi-border);border-right:none;">
+                        <i class="bi bi-search" style="color:var(--lgi-muted);"></i>
+                    </span>
+                    <input type="text" id="buscadorCliente" class="form-control"
+                           style="border-left:none;"
+                           placeholder="Nombre o DNI...">
+                </div>
+                <div class="list-group list-group-flush"
+                     id="listaClientes"
+                     style="max-height:300px;overflow-y:auto;border:1px solid var(--lgi-border);border-radius:8px;">
+                    {% for c in clientes %}
+                    <a href="?cliente_id={{ c.id }}" class="list-group-item list-group-item-action py-3">
+                        <div class="fw-bold" style="font-size:0.9rem;">{{ c.nombre_apellido }}</div>
+                        <small style="color:var(--lgi-muted);">DNI: {{ c.dni }} | Tel: {{ c.telefono }}</small>
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
-
-            <div class="col-md-8">
-                <form method="POST" enctype="multipart/form-data" class="card shadow-sm border-0" id="formRecepcion">
-                    {% csrf_token %}
-                    <div class="card-header bg-primary text-white py-3">
-                        <i class="bi bi-person-badge me-2"></i>
-                        {% if cliente_sel %} Editando Cliente: {{ cliente_sel.nombre_apellido }} {% else %} Datos del Cliente {% endif %}
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Nombre y Apellido</label>
-                                <input type="text" name="nombre_apellido" class="form-control" required value="{{ cliente_sel.nombre_apellido }}" {% if cliente_sel %}readonly{% endif %}>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">DNI</label>
-                                <input type="text" name="dni" class="form-control" value="{{ cliente_sel.dni }}" {% if cliente_sel %}readonly{% endif %}>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-primary fw-bold small">WhatsApp</label>
-                                <input type="text" name="telefono" class="form-control border-primary-custom" required value="{{ cliente_sel.telefono }}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-primary fw-bold small">Email</label>
-                                <input type="email" name="email" class="form-control border-primary-custom" value="{{ cliente_sel.email }}">
-                            </div>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-phone fs-4 me-2 text-secondary"></i>
-                            <h5 class="mb-0 text-secondary fw-bold">Información del Equipo</h5>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-bold">Marca y Modelo</label>
-                                <input type="text" name="marca_modelo" class="form-control" placeholder="Ej: iPhone 13" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-bold">IMEI / Serie</label>
-                                <input type="text" name="identificador" class="form-control">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-bold">Contraseña</label>
-                                <input type="text" name="password" class="form-control">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Falla Reportada</label>
-                            <textarea name="falla_cliente" class="form-control bg-light" rows="3" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Observaciones Estéticas</label>
-                            <textarea name="obs_recepcion" class="form-control bg-light" rows="2"></textarea>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small"><i class="bi bi-camera"></i> Fotos de Recepción</label>
-                            <input type="file" id="inputDisparador" class="form-control" accept="image/*">
-
-                            <div id="listaPreviews" class="d-flex flex-wrap gap-2 mt-2"></div>
-
-                            <div class="info-fotos mt-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <span id="contadorFotos">0 fotos listas para el sistema.</span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-success btn-lg w-100 shadow">
-                            <i class="bi bi-check-circle"></i> FINALIZAR
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 
-    <script>
-        // Lógica de búsqueda original
-        document.getElementById('buscadorCliente').addEventListener('input', function(e) {
-            let filter = e.target.value.toLowerCase();
-            let items = document.querySelectorAll('#listaClientes a');
-            items.forEach(item => {
-                item.style.display = item.innerText.toLowerCase().includes(filter) ? "" : "none";
-            });
+    <!-- FORMULARIO PRINCIPAL -->
+    <div class="col-md-8">
+        <form method="POST" enctype="multipart/form-data" class="card" id="formRecepcion">
+            {% csrf_token %}
+
+            <div class="card-header py-3 fw-bold"
+                 style="background:var(--lgi-dark);border-bottom:1px solid var(--lgi-border);color:var(--lgi-gold);font-size:0.85rem;letter-spacing:0.5px;">
+                <i class="bi bi-person-badge me-2"></i>
+                {% if cliente_sel %}
+                    EDITANDO CLIENTE: {{ cliente_sel.nombre_apellido }}
+                {% else %}
+                    DATOS DEL CLIENTE
+                {% endif %}
+            </div>
+
+            <div class="card-body p-4">
+
+                <!-- DATOS CLIENTE -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre y Apellido</label>
+                        <input type="text" name="nombre_apellido" class="form-control" required
+                               value="{{ cliente_sel.nombre_apellido }}"
+                               {% if cliente_sel %}readonly{% endif %}>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">DNI</label>
+                        <input type="text" name="dni" class="form-control"
+                               value="{{ cliente_sel.dni }}"
+                               {% if cliente_sel %}readonly{% endif %}>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--lgi-gold);">
+                            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                        </label>
+                        <input type="text" name="telefono" class="form-control" required
+                               style="border-color:var(--lgi-gold);"
+                               value="{{ cliente_sel.telefono }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--lgi-gold);">
+                            <i class="bi bi-envelope me-1"></i> Email
+                        </label>
+                        <input type="email" name="email" class="form-control"
+                               style="border-color:var(--lgi-gold);"
+                               value="{{ cliente_sel.email }}">
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- DATOS EQUIPO -->
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-phone fs-5 me-2" style="color:var(--lgi-muted);"></i>
+                    <h6 class="mb-0 fw-bold" style="color:var(--lgi-muted);letter-spacing:1px;text-transform:uppercase;">
+                        Información del Equipo
+                    </h6>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Marca y Modelo</label>
+                        <input type="text" name="marca_modelo" class="form-control"
+                               placeholder="Ej: iPhone 13" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">IMEI / Serie</label>
+                        <input type="text" name="identificador" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Contraseña</label>
+                        <input type="text" name="password" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Falla Reportada</label>
+                    <textarea name="falla_cliente" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Observaciones Estéticas</label>
+                    <textarea name="obs_recepcion" class="form-control" rows="2"></textarea>
+                </div>
+
+                <!-- FOTOS -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-camera me-1" style="color:var(--lgi-gold);"></i>Fotos de Recepción
+                    </label>
+                    <input type="file" id="inputDisparador" class="form-control" accept="image/*">
+                    <div id="listaPreviews" class="d-flex flex-wrap gap-2 mt-2"></div>
+                    <div class="info-fotos">
+                        <i class="bi bi-check-circle-fill me-1" style="color:var(--state-lst);"></i>
+                        <span id="contadorFotos">0 fotos listas para el sistema.</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-lgi-gold btn-lg w-100 fw-bold">
+                    <i class="bi bi-check-circle me-2"></i>FINALIZAR INGRESO
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('buscadorCliente').addEventListener('input', function(e) {
+        let filter = e.target.value.toLowerCase();
+        document.querySelectorAll('#listaClientes a').forEach(item => {
+            item.style.display = item.innerText.toLowerCase().includes(filter) ? "" : "none";
         });
+    });
 
-        let bolsaDeFotos = [];
-        const disparador = document.getElementById('inputDisparador');
-        const listaPreviews = document.getElementById('listaPreviews');
-        const contador = document.getElementById('contadorFotos');
-        const form = document.getElementById('formRecepcion');
-        const overlay = document.getElementById('overlay');
+    let bolsaDeFotos = [];
+    const disparador  = document.getElementById('inputDisparador');
+    const listaPreviews = document.getElementById('listaPreviews');
+    const contador    = document.getElementById('contadorFotos');
+    const form        = document.getElementById('formRecepcion');
+    const overlay     = document.getElementById('overlay');
 
-        // Función para comprimir imágenes
-        async function compressImage(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1000; // Resolución suficiente para un SAT
-                        const scale = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scale;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        canvas.toBlob((blob) => {
-                            resolve(new File([blob], file.name, { type: "image/jpeg" }));
-                        }, 'image/jpeg', 0.7); // Calidad al 70%
-                    };
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1000;
+                    const scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob((blob) => {
+                        resolve(new File([blob], file.name, { type: "image/jpeg" }));
+                    }, 'image/jpeg', 0.7);
                 };
-            });
-        }
-
-        disparador.addEventListener('change', async function() {
-            if (this.files.length > 0) {
-                const fotoOriginal = this.files[0];
-
-                // Comprimimos antes de guardar en la bolsa
-                const fotoComprimida = await compressImage(fotoOriginal);
-                bolsaDeFotos.push(fotoComprimida);
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-thumb shadow-sm';
-                    listaPreviews.appendChild(img);
-                }
-                reader.readAsDataURL(fotoComprimida);
-
-                contador.innerText = bolsaDeFotos.length + " fotos procesadas.";
-                this.value = "";
-            }
+            };
         });
+    }
 
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            overlay.style.display = 'flex'; // Mostrar "Subiendo..."
+    disparador.addEventListener('change', async function() {
+        if (this.files.length > 0) {
+            const fotoComprimida = await compressImage(this.files[0]);
+            bolsaDeFotos.push(fotoComprimida);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'preview-thumb shadow-sm';
+                listaPreviews.appendChild(img);
+            };
+            reader.readAsDataURL(fotoComprimida);
+            contador.innerText = bolsaDeFotos.length + " fotos procesadas.";
+            this.value = "";
+        }
+    });
 
-            const dataTransfer = new DataTransfer();
-            bolsaDeFotos.forEach(f => dataTransfer.items.add(f));
-
-            const inputFinal = document.createElement('input');
-            inputFinal.type = 'file';
-            inputFinal.name = 'fotos';
-            inputFinal.multiple = true;
-            inputFinal.files = dataTransfer.files;
-            inputFinal.style.display = 'none';
-
-            form.appendChild(inputFinal);
-            form.submit();
-        };
-    </script>
-</body>
-</html>
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        overlay.style.display = 'flex';
+        const dataTransfer = new DataTransfer();
+        bolsaDeFotos.forEach(f => dataTransfer.items.add(f));
+        const inputFinal = document.createElement('input');
+        inputFinal.type = 'file';
+        inputFinal.name = 'fotos';
+        inputFinal.multiple = true;
+        inputFinal.files = dataTransfer.files;
+        inputFinal.style.display = 'none';
+        form.appendChild(inputFinal);
+        form.submit();
+    };
+</script>
+{% endblock %}

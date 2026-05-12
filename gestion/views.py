@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.db.models import Q, Sum, F
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.contrib import messages
 from django.conf import settings
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.utils import timezone
@@ -265,8 +266,8 @@ def nuevo_ingreso(request):
         if cliente.email:
             try:
                 _enviar_email_lgi(cliente, equipo, ficha)
-            except:
-                pass
+            except Exception as e:
+                messages.warning(request, f"Ficha creada, pero el email no pudo enviarse: {e}")
 
         return redirect('dashboard')
     return render(request, 'gestion/nuevo_ingreso.html', {'clientes': clientes, 'cliente_sel': cliente_seleccionado})
@@ -824,7 +825,8 @@ def reenviar_email_ingreso(request, ficha_id):
     if cliente.email:
         try:
             _enviar_email_lgi(cliente, equipo, ficha)
-        except:
-            pass
+            messages.success(request, "Email reenviado correctamente.")
+        except Exception as e:
+            messages.error(request, f"No se pudo enviar el email: {e}")
 
     return redirect('detalle_ficha', ficha_id=ficha_id)

@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x1a_j-r*i@^204a%nj+f@o#fy03h^(qjq#$w$w3tsh$(f)b_9='
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-x1a_j-r*i@^204a%nj+f@o#fy03h^(qjq#$w$w3tsh$(f)b_9=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -95,7 +95,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'lgi.repara@gmail.com'
-EMAIL_HOST_PASSWORD = 'yosi vqro bbqm kkqb'
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'LGI Electrónics <lgi.repara@gmail.com>'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

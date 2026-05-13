@@ -216,7 +216,9 @@ def editar_datos_recepcion(request, ficha_id):
     ficha = get_object_or_404(Ficha, id=ficha_id)
     if request.method == 'POST':
         cliente = ficha.equipo.cliente
-        cliente.nombre_apellido = request.POST.get('nombre_apellido')
+        nombre = request.POST.get('nombre_apellido', '').strip()
+        if nombre:
+            cliente.nombre_apellido = nombre
         cliente.telefono = request.POST.get('telefono')
         cliente.email = request.POST.get('email')
         cliente.save()
@@ -367,8 +369,10 @@ def reportes_ganancias(request):
 
     if fecha_inicio and fecha_fin and fecha_inicio != 'None' and fecha_fin != 'None':
         try:
-            fichas = fichas.filter(fecha_ingreso__range=[fecha_inicio, f"{fecha_fin} 23:59:59"])
-        except:
+            inicio = make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
+            fin = make_aware(datetime.strptime(f"{fecha_fin} 23:59:59", '%Y-%m-%d %H:%M:%S'))
+            fichas = fichas.filter(fecha_ingreso__range=[inicio, fin])
+        except Exception:
             pass
 
     if 'exportar' in request.GET:

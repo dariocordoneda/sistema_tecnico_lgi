@@ -20,7 +20,9 @@ from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 USER = os.environ.get("PA_USERNAME", "").strip()
 PASS = os.environ.get("PA_PASSWORD", "")
-DOMAIN = f"{USER}.pythonanywhere.com"
+# El path /user/{USER}/webapps/ es case-sensitive; el username canonico es minuscula.
+USER_PATH = USER.lower()
+DOMAIN = f"{USER_PATH}.pythonanywhere.com"
 
 if not USER or not PASS:
     print("ERROR: faltan PA_USERNAME / PA_PASSWORD en el entorno", file=sys.stderr)
@@ -49,7 +51,7 @@ def main():
         print(f"Login OK -> {page.url}")
 
         # --- Pestaña Web ---
-        page.goto(f"https://www.pythonanywhere.com/user/{USER}/webapps/")
+        page.goto(f"https://www.pythonanywhere.com/user/{USER_PATH}/webapps/")
         page.wait_for_load_state("networkidle")
 
         # Buscar el boton de renovacion por texto (puede ser button, a o input)

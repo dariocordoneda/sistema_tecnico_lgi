@@ -1,0 +1,40 @@
+name: Keep PythonAnywhere Alive
+
+# Renueva el periodo online de la web app en PythonAnywhere (free tier expira a 3 meses).
+# Corre semanal: aprieta "Run until 3 months from today" cuando el boton aparece.
+# Requiere secrets del repo: PA_USERNAME, PA_PASSWORD.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'    # lunes 06:00 UTC (03:00 Argentina)
+  workflow_dispatch:
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar Playwright + Chromium
+        run: |
+          pip install --quiet playwright
+          playwright install --with-deps chromium
+
+      - name: Renovar periodo en PythonAnywhere
+        env:
+          PA_USERNAME: ${{ secrets.PA_USERNAME }}
+          PA_PASSWORD: ${{ secrets.PA_PASSWORD }}
+        run: python .github/scripts/pa_keepalive.py
+
+      - name: Guardar capturas (debug)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: pa_*.png
+          if-no-files-found: ignore
+          retention-days: 7

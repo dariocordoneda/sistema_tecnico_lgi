@@ -39,7 +39,8 @@ def main():
         page.goto("https://www.pythonanywhere.com/login/")
         page.fill("#id_auth-username", USER)
         page.fill("#id_auth-password", PASS)
-        page.click("#id_next, input[type=submit], button[type=submit]")
+        # Enviar el form con Enter en el campo password (evita ambiguedad de botones).
+        page.press("#id_auth-password", "Enter")
         page.wait_for_load_state("networkidle")
 
         if "/login/" in page.url:

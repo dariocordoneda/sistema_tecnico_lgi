@@ -65,24 +65,43 @@ def main():
             browser.close()
             sys.exit(1)
 
-        # Buscar el boton de renovacion por texto (puede ser button, a o input)
-        renew = page.locator(
-            "text=/Run until 3 months from today/i"
-        ).or_(page.locator("input[value*='3 months' i]"))
+        # Escanear todos los clickables y buscar el boton de renovacion por etiqueta.
+        candidates = page.locator("button, input[type=submit], a[href]")
+        target = None
+        hit_label = ""
+        labels = []
+        for i in range(candidates.count()):
+            el = candidates.nth(i)
+            try:
+                label = (el.inner_text(timeout=1000) or "").strip()
+            except Exception:
+                label = ""
+            if not label:
+                label = (el.get_attribute("value") or "").strip()
+            if label:
+                labels.append(label)
+            if re.search(r"(run until|3 months|extend|until 3 months)", label, re.I):
+                target = el
+                hit_label = label
+                break
 
-        if renew.count() > 0:
-            renew.first.click()
+        if target is not None:
+            target.scroll_into_view_if_needed()
+            target.click()
             page.wait_for_load_state("networkidle")
-            print("OK -> periodo renovado (boton apretado).")
+            print(f"OK -> periodo renovado (boton: '{hit_label}').")
+            page.screenshot(path="pa_web_tab.png", full_page=True)
+            browser.close()
         else:
-            # Sin boton = todavia lejos de expirar; no es un error.
-            txt = page.inner_text("body")
-            m = re.search(r"expire[sd]? on\s+([0-9A-Za-z ,\-]+)", txt, re.I)
+            m = (re.search(r"disabled on\s+([0-9A-Za-z ,]+)", body, re.I)
+                 or re.search(r"expire[sd]? on\s+([0-9A-Za-z ,]+)", body, re.I))
             cuando = m.group(1).strip() if m else "fecha no detectada"
-            print(f"Sin boton de renovacion visible — app vigente (expira: {cuando}).")
-
-        page.screenshot(path="pa_web_tab.png", full_page=True)
-        browser.close()
+            print(f"ERROR: no encontre el boton de renovacion. Expira: {cuando}.",
+                  file=sys.stderr)
+            print("Clickables vistos: " + " | ".join(labels[:50]), file=sys.stderr)
+            page.screenshot(path="pa_web_tab.png", full_page=True)
+            browser.close()
+            sys.exit(1)
 
 
 if __name__ == "__main__":

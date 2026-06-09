@@ -20,9 +20,6 @@ from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 USER = os.environ.get("PA_USERNAME", "").strip()
 PASS = os.environ.get("PA_PASSWORD", "")
-# El path /user/{USER}/webapps/ es case-sensitive; el username canonico es minuscula.
-USER_PATH = USER.lower()
-DOMAIN = f"{USER_PATH}.pythonanywhere.com"
 
 if not USER or not PASS:
     print("ERROR: faltan PA_USERNAME / PA_PASSWORD en el entorno", file=sys.stderr)
@@ -51,9 +48,22 @@ def main():
             sys.exit(1)
         print(f"Login OK -> {page.url}")
 
+        # El path /user/{username}/ es case-sensitive: tomar el username canonico
+        # del redirect post-login en vez de adivinar la capitalizacion.
+        m_user = re.search(r"/user/([^/]+)/", page.url)
+        canon = m_user.group(1) if m_user else USER
+
         # --- Pestaña Web ---
-        page.goto(f"https://www.pythonanywhere.com/user/{USER_PATH}/webapps/")
+        page.goto(f"https://www.pythonanywhere.com/user/{canon}/webapps/")
         page.wait_for_load_state("networkidle")
+
+        body = page.inner_text("body")
+        if "Access Denied" in body or "not authorized" in body:
+            page.screenshot(path="pa_web_tab.png", full_page=True)
+            print(f"ERROR: 403 en /user/{canon}/webapps/ — path/username incorrecto",
+                  file=sys.stderr)
+            browser.close()
+            sys.exit(1)
 
         # Buscar el boton de renovacion por texto (puede ser button, a o input)
         renew = page.locator(

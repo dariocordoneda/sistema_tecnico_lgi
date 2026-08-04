@@ -12,6 +12,8 @@ on:
 jobs:
   renew:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write        # necesario para el commit de keepalive del final
     steps:
       - uses: actions/checkout@v4
 
@@ -38,3 +40,17 @@ jobs:
           path: pa_*.png
           if-no-files-found: ignore
           retention-days: 7
+
+      # ponytail: GitHub deshabilita los cron programados a los 60 dias sin actividad
+      # del repo. Un commit vacio cada 45+ dias resetea el contador. Se ejecuta aunque
+      # el paso anterior falle: si el cron muere, no hay reintento la semana que viene.
+      - name: Evitar auto-disable del cron
+        if: always()
+        run: |
+          DIAS=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "Ultimo commit hace $DIAS dias"
+          if [ "$DIAS" -lt 45 ]; then echo "Repo activo, no hace falta"; exit 0; fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keepalive del cron (reset contador de inactividad)"
+          git push
